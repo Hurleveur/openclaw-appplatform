@@ -13,7 +13,6 @@ COPY --from=tailscale /usr/local/bin/containerboot /usr/local/bin/containerboot
 
 ARG TARGETARCH=amd64
 ARG MOLTBOT_VERSION=2026.1.27-beta.1
-ARG LITESTREAM_VERSION=0.5.6
 ARG S6_OVERLAY_VERSION=3.2.1.0
 ARG NODE_MAJOR=24
 ARG RESTIC_VERSION=0.17.3
@@ -24,15 +23,14 @@ ARG MOLTBOT_STATE_DIR=/data/.moltbot
 ARG MOLTBOT_WORKSPACE_DIR=/data/workspace
 
 ENV MOLTBOT_STATE_DIR=${MOLTBOT_STATE_DIR}
-ENV MOLTBOT_WORKSPACE_DIR ${MOLTBOT_WORKSPACE_DIR}
-ENV TS_STATE_DIR /data/tailscale
-ENV NODE_ENV production
-ENV DEBIAN_FRONTEND noninteractive
-ENV S6_KEEP_ENV 1
-ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 2
-ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME 0
+ENV MOLTBOT_WORKSPACE_DIR=${MOLTBOT_WORKSPACE_DIR}
+ENV NODE_ENV=production
+ENV DEBIAN_FRONTEND=noninteractive
+ENV S6_KEEP_ENV=1
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
 
-# Install OS deps + Node.js + sshd + Litestream + restic + s6-overlay
+# Install OS deps + Node.js + sshd + restic + s6-overlay
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -55,12 +53,6 @@ RUN set -eux; \
       build-essential \
       procps \
       xz-utils; \
-    # Install Litestream
-    LITESTREAM_ARCH="$( [ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x86_64 )"; \
-    wget -O /tmp/litestream.deb \
-      https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-${LITESTREAM_ARCH}.deb; \
-    dpkg -i /tmp/litestream.deb; \
-    rm /tmp/litestream.deb; \
     # Install restic
     RESTIC_ARCH="$( [ "$TARGETARCH" = "arm64" ] && echo arm64 || echo amd64 )"; \
     wget -q -O /tmp/restic.bz2 \
@@ -100,7 +92,8 @@ COPY rootfs/ /
 
 # Create non-root user (using existing home directory from rootfs)
 RUN useradd -d /home/moltbot -s /bin/bash moltbot \
-    && mkdir -p "${MOLTBOT_STATE_DIR}" "${MOLTBOT_WORKSPACE_DIR}" "${TS_STATE_DIR}" \
+    && mkdir -p "${MOLTBOT_STATE_DIR}" "${MOLTBOT_WORKSPACE_DIR}" \
+    && ln -s ${MOLTBOT_STATE_DIR} /home/moltbot/.clawdbot \
     && chown -R moltbot:moltbot /data \
     && chown -R moltbot:moltbot /home/moltbot
 

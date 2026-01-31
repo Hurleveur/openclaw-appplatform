@@ -8,14 +8,24 @@ done
 
 CONFIG_FILE="/etc/moltbot/backup.yaml"
 
-# Ensure directories exist
-mkdir -p "$MOLTBOT_STATE_DIR" "$MOLTBOT_WORKSPACE_DIR" "$TS_STATE_DIR"
+# Ensure directories exist (only if variables are set)
+[ -n "$MOLTBOT_STATE_DIR" ] && mkdir -p "$MOLTBOT_STATE_DIR"
+[ -n "$MOLTBOT_WORKSPACE_DIR" ] && mkdir -p "$MOLTBOT_WORKSPACE_DIR"
+[ -n "$TS_STATE_DIR" ] && mkdir -p "$TS_STATE_DIR"
 
 # Check if persistence is configured
 if [ -z "$RESTIC_REPOSITORY" ] || [ -z "$RESTIC_PASSWORD" ]; then
   echo "[restore-state] Persistence not configured, skipping"
   exit 0
 fi
+
+# Ensure AWS credentials are exported for restic S3 backend
+if [ -z "$RESTIC_SPACES_ACCESS_KEY_ID" ] || [ -z "$RESTIC_SPACES_SECRET_ACCESS_KEY" ]; then
+  echo "[restore-state] ERROR: RESTIC_SPACES_ACCESS_KEY_ID or RESTIC_SPACES_SECRET_ACCESS_KEY not set"
+  exit 1
+fi
+export AWS_ACCESS_KEY_ID="$RESTIC_SPACES_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$RESTIC_SPACES_SECRET_ACCESS_KEY"
+export RESTIC_SPACES_ACCESS_KEY_ID RESTIC_SPACES_SECRET_ACCESS_KEY RESTIC_REPOSITORY RESTIC_PASSWORD
 
 # Check if config exists
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -24,7 +34,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Check if repository has any snapshots
-if ! restic snapshots --latest 1 2>/dev/null | grep -q .; then
+if ! restic snapshots --latest 1 2>/dev/null | grep -q 'ID'; then
   echo "[restore-state] No snapshots found in repository, skipping"
   exit 0
 fi
@@ -41,21 +51,20 @@ echo "[restore-state] Restoring $PATH_COUNT paths..."
 
 for i in $(seq 0 $((PATH_COUNT - 1))); do
   RESTORE_PATH=$(yq -r ".paths[$i].path" "$CONFIG_FILE")
-  
+
   # Ensure parent directory exists
   mkdir -p "$(dirname "$RESTORE_PATH")"
-  
-  # Find latest snapshot for this specific path, excluding current container
-  CURRENT_HOSTNAME=$TS_HOSTNAME
-  SNAPSHOT_ID=$(restic snapshots --path "$RESTORE_PATH" --json 2>/dev/null | jq -r --arg host "$CURRENT_HOSTNAME" '[.[] | select(.hostname != $host)] | sort_by(.time) | reverse | .[0].id // empty')
-  
+
+  # Find latest snapshot for this specific path
+  SNAPSHOT_ID=$(restic snapshots --path "$RESTORE_PATH" --latest 1 --json 2>/dev/null | jq -r '.[0].id // empty')
+
   if [ -z "$SNAPSHOT_ID" ]; then
     echo "[restore-state] No snapshot found for $RESTORE_PATH, skipping"
     continue
   fi
-  
+
   echo "[restore-state] Restoring: $RESTORE_PATH (snapshot $SNAPSHOT_ID)"
-  
+
   # Run restic restore from the snapshot that contains this path
   if restic restore "$SNAPSHOT_ID" --target / --include "$RESTORE_PATH" 2>&1; then
     echo "[restore-state] Completed: $RESTORE_PATH"
@@ -65,8 +74,14 @@ for i in $(seq 0 $((PATH_COUNT - 1))); do
 done
 
 # Fix ownership on moltbot directories (restored as root, needs moltbot user)
-if [ -d "$MOLTBOT_STATE_DIR" ]; then
+if [ -n "$MOLTBOT_STATE_DIR" ] && [ -d "$MOLTBOT_STATE_DIR" ]; then
   chown -R moltbot:moltbot "$MOLTBOT_STATE_DIR"
+fi
+
+# Fix ownership on tailscale directory
+if [ -n "$TS_STATE_DIR" ] && [ -d "$TS_STATE_DIR" ]; then
+  chown -R moltbot:moltbot "$TS_STATE_DIR"
+  chmod 750 "$TS_STATE_DIR"
 fi
 
 echo "[restore-state] Restore complete"

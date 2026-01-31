@@ -4,19 +4,15 @@
 CONFIG_FILE="/etc/moltbot/backup.yaml"
 
 # Skip if persistence not configured
-if [ -z "$LITESTREAM_ACCESS_KEY_ID" ] || [ -z "$SPACES_BUCKET" ]; then
+if [ -z "$RESTIC_SPACES_ACCESS_KEY_ID" ] || [ -z "$RESTIC_SPACES_BUCKET" ]; then
   echo "[setup-restic] Persistence not configured, skipping"
   exit 0
 fi
 
 echo "[setup-restic] Configuring restic for DO Spaces..."
 
-# Create s6 container environment directory
-mkdir -p /run/s6/container_environment
+export RESTIC_HOST=${STABLE_HOSTNAME:-moltbot}
 
-# Export AWS credentials for restic S3 backend
-echo "$LITESTREAM_ACCESS_KEY_ID" > /run/s6/container_environment/AWS_ACCESS_KEY_ID
-echo "$LITESTREAM_SECRET_ACCESS_KEY" > /run/s6/container_environment/AWS_SECRET_ACCESS_KEY
 
 # Set restic password (from env or generate a persistent one)
 if [ -z "$RESTIC_PASSWORD" ]; then
@@ -31,24 +27,52 @@ if [ -z "$RESTIC_PASSWORD" ]; then
     echo "[setup-restic] Generated new restic password (stored in $MOLTBOT_STATE_DIR/.restic-password)"
   fi
 fi
-echo "$RESTIC_PASSWORD" > /run/s6/container_environment/RESTIC_PASSWORD
 
-echo "$TS_HOSTNAME" > /run/s6/container_environment/RESTIC_HOST
+# Validate required variables are set
+if [ -z "$RESTIC_SPACES_ENDPOINT" ] || [ -z "$RESTIC_SPACES_BUCKET" ] || [ -z "$RESTIC_HOST" ]; then
+  echo "[setup-restic] ERROR: RESTIC_SPACES_ENDPOINT, RESTIC_SPACES_BUCKET, or RESTIC_HOST not set" >&2
+  echo "[setup-restic] RESTIC_SPACES_ENDPOINT=${RESTIC_SPACES_ENDPOINT:-unset}" >&2
+  echo "[setup-restic] RESTIC_SPACES_BUCKET=${RESTIC_SPACES_BUCKET:-unset}" >&2
+  echo "[setup-restic] RESTIC_HOST=${RESTIC_HOST:-unset}" >&2
+  exit 1
+fi
 
-# Build repository URL from config (expand env vars)
 REPO_TEMPLATE=$(yq -r '.repository' "$CONFIG_FILE")
 RESTIC_REPOSITORY=$(eval echo "$REPO_TEMPLATE")
-echo "$RESTIC_REPOSITORY" > /run/s6/container_environment/RESTIC_REPOSITORY
+
+# Validate repository path was expanded correctly (should not contain ${})
+if echo "$RESTIC_REPOSITORY" | grep -q '\${'; then
+  echo "[setup-restic] ERROR: Repository path contains unexpanded variables: $RESTIC_REPOSITORY" >&2
+  echo "[setup-restic] Template was: $REPO_TEMPLATE" >&2
+  exit 1
+fi
+
 
 # Export for current script
-export AWS_ACCESS_KEY_ID="$LITESTREAM_ACCESS_KEY_ID"
-export AWS_SECRET_ACCESS_KEY="$LITESTREAM_SECRET_ACCESS_KEY"
 export RESTIC_PASSWORD
 export RESTIC_REPOSITORY
 
+# Ensure Spaces credentials are exported for restic S3 backend
+if [ -z "$RESTIC_SPACES_ACCESS_KEY_ID" ] || [ -z "$RESTIC_SPACES_SECRET_ACCESS_KEY" ]; then
+  log "ERROR: RESTIC_SPACES_ACCESS_KEY_ID or RESTIC_SPACES_SECRET_ACCESS_KEY not set"
+  exit 1
+fi
+export AWS_ACCESS_KEY_ID="$RESTIC_SPACES_ACCESS_KEY_ID" AWS_SECRET_ACCESS_KEY="$RESTIC_SPACES_SECRET_ACCESS_KEY"
+
+
+# Write all RESTIC_ prefixed environment variables
+# Ensure environment directory exists
+mkdir -p /run/s6/container_environment
+
+while IFS='=' read -r var value; do
+  echo "$value" > "/run/s6/container_environment/$var" || {
+  echo "[tailscale] Warning: Failed to write $var" >&2
+}
+done < <(env | grep -E '^RESTIC_')
+
 # Initialize restic repo if it doesn't exist
 echo "[setup-restic] Checking if restic repository exists..."
-if restic snapshots 2>/dev/null; then
+if restic snapshots | tail -n 20 2>/dev/null; then
   echo "[setup-restic] Restic repository already initialized"
 else
   echo "[setup-restic] Initializing restic repository..."

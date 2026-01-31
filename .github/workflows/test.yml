@@ -1,0 +1,60 @@
+name: Test Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create minimal .env for testing
+        run: |
+          cat > .env << 'EOF'
+          ENABLE_TAILSCALE=false
+          ENABLE_NGROK=false
+          ENABLE_SPACES=false
+          ENABLE_SSH=false
+          STABLE_HOSTNAME=moltbot-test
+          # Keep container running even if services fail (0=continue, 1=SIGTERM, 2=SIGKILL)
+          S6_BEHAVIOUR_IF_STAGE2_FAILS=0
+          EOF
+
+      - name: Build and start container
+        run: make rebuild
+
+      - name: Wait for services
+        run: sleep 10
+
+      - name: Dump container status
+        if: always()
+        run: docker ps -a --filter name=moltbot-test
+
+      - name: Dump container logs
+        if: always()
+        run: docker logs moltbot-test 2>&1 || true
+
+      - name: Dump process list
+        if: always()
+        run: docker exec moltbot-test ps aux || echo "Container not running"
+
+      - name: Verify container is running
+        run: |
+          if ! docker ps --filter name=moltbot-test --filter status=running | grep -q moltbot-test; then
+            echo "error: Container is not running"
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down || true

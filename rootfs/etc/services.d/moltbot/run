@@ -7,9 +7,7 @@ echo "[moltbot] Starting moltbot gateway..."
 export HOME=/home/moltbot
 exec s6-setuidgid moltbot bash -c '
   export HOME=/home/moltbot
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-  export PNPM_HOME="$HOME/.local/share/pnpm"
-  export PATH="$PNPM_HOME:$PATH"
-  exec moltbot gateway --allow-unconfigured
-'
+  source /home/moltbot/.bashrc
+  source /home/moltbot/.profile
+  moltbot gateway --allow-unconfigured
+' > /proc/1/fd/1 2>&1

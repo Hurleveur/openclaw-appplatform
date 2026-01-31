@@ -25,11 +25,11 @@ Deploy [Moltbot](https://github.com/moltbot/moltbot) - a multi-channel AI messag
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │ s6-overlay - Process supervision and init system             │  │
 │  └──────────────────────────────────────────────────────────────┘  │
-│  ┌─────────────┐  ┌───────────────────┐  ┌────────────────────┐   │
-│  │ Ubuntu      │  │ Moltbot Gateway   │  │ Litestream         │   │
-│  │ Noble+Node  │  │ WebSocket :18789  │  │ (ENABLE_SPACES)    │   │
-│  │ + nvm       │  │ + Control UI      │  │ SQLite → DO Spaces │   │
-│  └─────────────┘  └───────────────────┘  └────────────────────┘   │
+│  ┌─────────────┐  ┌───────────────────┐                            │
+│  │ Ubuntu      │  │ Moltbot Gateway   │                            │
+│  │ Noble+Node  │  │ WebSocket :18789  │                            │
+│  │ + nvm       │  │ + Control UI      │                            │
+│  └─────────────┘  └───────────────────┘                            │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │ Access Layer (choose one):                                   │  │
 │  │  • Console only (default) - doctl apps console               │  │
@@ -104,7 +104,7 @@ Add a public URL to access the Control UI. **Recommended for getting started.**
 
 ### Get ngrok Token
 
-1. Sign up at https://dashboard.ngrok.com
+1. Sign up at <https://dashboard.ngrok.com>
 2. Copy your authtoken from the dashboard
 
 ### Deploy
@@ -129,7 +129,7 @@ envs:
 curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 ```
 
-Or check the ngrok dashboard at https://dashboard.ngrok.com/tunnels
+Or check the ngrok dashboard at <https://dashboard.ngrok.com/tunnels>
 
 ### What's Added
 
@@ -147,7 +147,7 @@ Private network access via your Tailscale tailnet. **Recommended for production.
 
 ### Get Tailscale Auth Key
 
-1. Go to https://login.tailscale.com/admin/settings/keys
+1. Go to <https://login.tailscale.com/admin/settings/keys>
 2. Generate a reusable auth key
 
 ### Deploy
@@ -164,7 +164,7 @@ envs:
     value: "true"
   - key: TS_AUTHKEY
     type: SECRET
-  - key: TS_HOSTNAME
+  - key: STABLE_HOSTNAME
     value: moltbot
 ```
 
@@ -207,13 +207,13 @@ Without persistence, all data is lost when the container restarts. Add DO Spaces
 envs:
   - key: ENABLE_SPACES
     value: "true"
-  - key: LITESTREAM_ACCESS_KEY_ID
+  - key: RESTIC_SPACES_ACCESS_KEY_ID
     type: SECRET
-  - key: LITESTREAM_SECRET_ACCESS_KEY
+  - key: RESTIC_SPACES_SECRET_ACCESS_KEY
     type: SECRET
-  - key: SPACES_ENDPOINT
+  - key: RESTIC_SPACES_ENDPOINT
     value: tor1.digitaloceanspaces.com  # Match your region
-  - key: SPACES_BUCKET
+  - key: RESTIC_SPACES_BUCKET
     value: moltbot-backup
   - key: RESTIC_PASSWORD
     type: SECRET
@@ -221,11 +221,34 @@ envs:
 
 ### What Gets Persisted
 
-| Data | Method | Frequency |
-|------|--------|-----------|
-| SQLite (search index) | Litestream | Real-time |
-| Config, sessions | Restic | Every 5 min |
-| Tailscale state | Restic | Every 5 min |
+The backup system uses [Restic](https://restic.net/) for incremental, encrypted snapshots to DigitalOcean Spaces.
+
+| Path | Contents | Backup Frequency |
+|------|----------|------------------|
+| `/data/.moltbot` | Gateway config, channel sessions, agents, memory | Every 30s (configurable) |
+| `/data/tailscale` | Tailscale connection state (persistent device) | Every 30s |
+| `/etc` | System configuration | Every 30s |
+| `/home` | User files, Homebrew packages | Every 30s |
+| `/root` | Root user data | Every 30s |
+
+**Automatic Restore:**
+- On container restart, `10-restore-state` init script automatically restores the latest snapshot for each path
+- Restores are fast and incremental
+- Data survives deployments, restarts, and instance replacements
+
+**Repository Management:**
+- Old snapshots are automatically pruned every hour
+- Repository is encrypted with `RESTIC_PASSWORD`
+- Stored in: `s3:<endpoint>/<bucket>/<hostname>/restic`
+
+**Configuration File:**
+Backup behavior is controlled by `/etc/moltbot/backup.yaml`:
+- **Backup paths**: What directories to back up
+- **Exclusions**: Files to skip (*.lock, *.pid, *.sock)
+- **Intervals**: Backup frequency (default: 30s), prune frequency (default: 1h)
+- **Retention policy**: How many snapshots to keep (last 10, hourly 48, daily 30, etc.)
+
+To customize, create `rootfs/etc/moltbot/backup.yaml` in your repo and rebuild.
 
 ---
 
@@ -278,6 +301,7 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 | Variable | Description |
 |----------|-------------|
 | `SETUP_PASSWORD` | Password for web setup wizard |
+|`STABLE_HOSTNAME` | A stable hostname for this instance|
 
 ### Feature Flags
 
@@ -300,16 +324,15 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 | Variable | Description |
 |----------|-------------|
 | `TS_AUTHKEY` | Tailscale auth key |
-| `TS_HOSTNAME` | Hostname on your tailnet |
 
 ### Spaces (when ENABLE_SPACES=true)
 
 | Variable | Description |
 |----------|-------------|
-| `LITESTREAM_ACCESS_KEY_ID` | Spaces access key |
-| `LITESTREAM_SECRET_ACCESS_KEY` | Spaces secret key |
-| `SPACES_ENDPOINT` | e.g., `tor1.digitaloceanspaces.com` |
-| `SPACES_BUCKET` | Your bucket name |
+| `RESTIC_SPACES_ACCESS_KEY_ID` | Spaces access key |
+| `RESTIC_SPACES_SECRET_ACCESS_KEY` | Spaces secret key |
+| `RESTIC_SPACES_ENDPOINT` | e.g., `tor1.digitaloceanspaces.com` |
+| `RESTIC_SPACES_BUCKET` | Your bucket name |
 | `RESTIC_PASSWORD` | Backup encryption password |
 
 ### Optional
@@ -351,8 +374,9 @@ exec my-daemon --foreground
 | `moltbot` | Moltbot gateway |
 | `ngrok` | ngrok tunnel (if enabled) |
 | `tailscale` | Tailscale daemon (if enabled) |
-| `litestream` | SQLite replication (if enabled) |
-| `backup` | Restic backup (if enabled) |
+| `backup` | Restic backup service - creates snapshots (if enabled) |
+| `prune` | Restic prune service - cleans old snapshots (if enabled) |
+| `crond` | Cron daemon for scheduled tasks |
 | `sshd` | SSH server (if enabled) |
 
 ---
@@ -362,6 +386,7 @@ exec my-daemon --foreground
 | Code | Location |
 |------|----------|
 | `nyc` | New York |
+| `atl` | Atlanta |
 | `ams` | Amsterdam |
 | `sfo` | San Francisco |
 | `sgp` | Singapore |

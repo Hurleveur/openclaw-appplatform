@@ -118,7 +118,7 @@ Update the app configuration:
 - Set ENABLE_NGROK=false
 - Set ENABLE_TAILSCALE=true
 - Add TS_AUTHKEY (I'll provide it)
-- Set TS_HOSTNAME=moltbot
+- Set STABLE_HOSTNAME=moltbot
 
 After deployment:
 1. Verify Tailscale is connected
@@ -166,9 +166,8 @@ Update the configuration:
 - Add RESTIC_PASSWORD for backup encryption
 
 After deployment:
-1. Verify Litestream is running: ps aux | grep litestream
-2. Verify backup service is running
-3. Confirm data will persist across restarts
+1. Verify backup service is running
+2. Confirm data will persist across restarts
 
 Use do-app-platform-skills for Spaces configuration.
 ```
