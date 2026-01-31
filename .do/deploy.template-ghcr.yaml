@@ -3,15 +3,15 @@
 # This file is experimental. Use deploy.template.yaml (builds from source) for now.
 # =============================================================================
 spec:
-  name: moltbot
+  name: openclaw
   region: tor
   workers:
-    - name: moltbot
+    - name: openclaw
       # Deploy from pre-built GHCR image (faster than building from source)
       image:
         registry_type: GHCR
         registry: ghcr.io
-        repository: bikramkgupta/clawdbot-appplatform
+        repository: bikramkgupta/openclaw-appplatform
         tag: latest
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-2gb  # Minimum 2GB required - 1GB causes heap overflow
@@ -51,7 +51,7 @@ spec:
           type: SECRET
         - key: TS_HOSTNAME
           scope: RUN_TIME
-          value: moltbot
+          value: openclaw
         - key: TS_USERSPACE
           scope: RUN_TIME
           value: "true"
@@ -71,13 +71,13 @@ spec:
           value: tor1.digitaloceanspaces.com
         - key: SPACES_BUCKET
           scope: RUN_TIME
-          value: moltbot-backup
+          value: openclaw-backup
         - key: RESTIC_PASSWORD
           scope: RUN_TIME
           type: SECRET
 
         # Optional
-        - key: MOLTBOT_GATEWAY_TOKEN
+        - key: OPENCLAW_GATEWAY_TOKEN
           scope: RUN_TIME
           type: SECRET
         - key: SSH_ENABLE

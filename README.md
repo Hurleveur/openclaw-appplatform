@@ -1,8 +1,8 @@
 # OpenClaw on DigitalOcean App Platform
 
-Deploy [OpenClaw](https://github.com/moltbot/moltbot) - a multi-channel AI messaging gateway - on DigitalOcean App Platform in minutes.
+Deploy [OpenClaw](https://github.com/openclaw/openclaw) - a multi-channel AI messaging gateway - on DigitalOcean App Platform in minutes.
 
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/digitalocean-labs/clawdbot-appplatform/tree/main)
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/digitalocean-labs/openclaw-appplatform/tree/main)
 
 ## Quick Start: Choose Your Stage
 
@@ -21,7 +21,7 @@ Deploy [OpenClaw](https://github.com/moltbot/moltbot) - a multi-channel AI messa
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                      moltbot-appplatform                           │
+│                      openclaw-appplatform                           │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │ s6-overlay - Process supervision and init system             │  │
 │  └──────────────────────────────────────────────────────────────┘  │
@@ -59,8 +59,8 @@ The simplest deployment. Access via `doctl apps console` and use CLI commands.
 
 ```bash
 # Clone the repo
-git clone https://github.com/digitalocean-labs/moltbot-appplatform
-cd moltbot-appplatform
+git clone https://github.com/digitalocean-labs/openclaw-appplatform
+cd openclaw-appplatform
 
 # Edit app.yaml - set instance size for Stage 1
 # instance_size_slug: apps-s-1vcpu-2gb  # 1 CPU, 2GB (minimum for stable operation)
@@ -78,19 +78,19 @@ doctl apps create --spec app.yaml
 doctl apps list
 
 # Open console
-doctl apps console <app-id> moltbot
+doctl apps console <app-id> openclaw
 
 # Verify gateway is running
-mb gateway health --url ws://127.0.0.1:18789
+openclaw gateway health --url ws://127.0.0.1:18789
 
 # Check channel status
-mb channels status --probe
+openclaw channels status --probe
 ```
 
 ### What's Included
 
 - ✅ OpenClaw gateway (WebSocket on port 18789)
-- ✅ CLI access via `mb` command
+- ✅ CLI access via `openclaw` command
 - ✅ All channel plugins (WhatsApp, Telegram, Discord, etc.)
 - ❌ No web UI access (use CLI/TUI)
 - ❌ No public URL
@@ -165,13 +165,13 @@ envs:
   - key: TS_AUTHKEY
     type: SECRET
   - key: STABLE_HOSTNAME
-    value: moltbot
+    value: openclaw
 ```
 
 ### Access
 
 ```
-https://moltbot.<your-tailnet>.ts.net
+https://openclaw.<your-tailnet>.ts.net
 ```
 
 ### What's Added
@@ -214,7 +214,7 @@ envs:
   - key: RESTIC_SPACES_ENDPOINT
     value: tor1.digitaloceanspaces.com  # Match your region
   - key: RESTIC_SPACES_BUCKET
-    value: moltbot-backup
+    value: openclaw-backup
   - key: RESTIC_PASSWORD
     type: SECRET
 ```
@@ -225,7 +225,7 @@ The backup system uses [Restic](https://restic.net/) for incremental, encrypted 
 
 | Path | Contents | Backup Frequency |
 |------|----------|------------------|
-| `/data/.moltbot` | Gateway config, channel sessions, agents, memory | Every 30s (configurable) |
+| `/data/.openclaw` | Gateway config, channel sessions, agents, memory | Every 30s (configurable) |
 | `/data/tailscale` | Tailscale connection state (persistent device) | Every 30s |
 | `/etc` | System configuration | Every 30s |
 | `/home` | User files, Homebrew packages | Every 30s |
@@ -242,13 +242,13 @@ The backup system uses [Restic](https://restic.net/) for incremental, encrypted 
 - Stored in: `s3:<endpoint>/<bucket>/<hostname>/restic`
 
 **Configuration File:**
-Backup behavior is controlled by `/etc/moltbot/backup.yaml`:
+Backup behavior is controlled by `/etc/openclaw/backup.yaml`:
 - **Backup paths**: What directories to back up
 - **Exclusions**: Files to skip (*.lock, *.pid, *.sock)
 - **Intervals**: Backup frequency (default: 30s), prune frequency (default: 1h)
 - **Retention policy**: How many snapshots to keep (last 10, hourly 48, daily 30, etc.)
 
-To customize, create `rootfs/etc/moltbot/backup.yaml` in your repo and rebuild.
+To customize, create `rootfs/etc/openclaw/backup.yaml` in your repo and rebuild.
 
 ---
 
@@ -265,29 +265,29 @@ Want an AI assistant to help deploy and configure OpenClaw? See **[AI-ASSISTED-S
 
 ## CLI Cheat Sheet
 
-The `mb` command is a wrapper that runs moltbot with the correct user and environment. **Always use `mb` in console sessions.**
+The `openclaw` command is a wrapper that runs openclaw with the correct user and environment. **Always use `openclaw` in console sessions.**
 
 ```bash
 # Gateway
-mb gateway health --url ws://127.0.0.1:18789
-mb gateway status
+openclaw gateway health --url ws://127.0.0.1:18789
+openclaw gateway status
 
 # Channels
-mb channels status --probe
-mb channels login                    # WhatsApp QR code
+openclaw channels status --probe
+openclaw channels login                    # WhatsApp QR code
 
 # Messages
-mb message send --channel whatsapp --target "+1234567890" --message "Hello!"
+openclaw message send --channel whatsapp --target "+1234567890" --message "Hello!"
 
 # Services
-/command/s6-svc -r /run/service/moltbot    # Restart
+/command/s6-svc -r /run/service/openclaw    # Restart
 /command/s6-svc -r /run/service/ngrok      # Restart ngrok
 
 # Logs
-tail -f /data/.moltbot/logs/gateway.log
+tail -f /data/.openclaw/logs/gateway.log
 
 # Config
-cat /data/.moltbot/moltbot.json | jq .
+cat /data/.openclaw/openclaw.json | jq .
 ```
 
 See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
@@ -339,7 +339,7 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 
 | Variable | Description |
 |----------|-------------|
-| `MOLTBOT_GATEWAY_TOKEN` | Gateway auth token (auto-generated if not set) |
+| `OPENCLAW_GATEWAY_TOKEN` | Gateway auth token (auto-generated if not set) |
 | `GRADIENT_API_KEY` | DigitalOcean Gradient AI key |
 | `GITHUB_USERNAME` | For SSH key fetching |
 
@@ -369,15 +369,15 @@ exec my-daemon --foreground
 
 ### Built-in Services
 
-| Service | Description |
-|---------|-------------|
-| `moltbot` | OpenClaw gateway |
-| `ngrok` | ngrok tunnel (if enabled) |
-| `tailscale` | Tailscale daemon (if enabled) |
-| `backup` | Restic backup service - creates snapshots (if enabled) |
-| `prune` | Restic prune service - cleans old snapshots (if enabled) |
-| `crond` | Cron daemon for scheduled tasks |
-| `sshd` | SSH server (if enabled) |
+| Service     | Description                                              |
+|-------------|----------------------------------------------------------|
+| `openclaw`  | OpenClaw gateway                                         |
+| `ngrok`     | ngrok tunnel (if enabled)                                |
+| `tailscale` | Tailscale daemon (if enabled)                            |
+| `backup`    | Restic backup service - creates snapshots (if enabled)   |
+| `prune`     | Restic prune service - cleans old snapshots (if enabled) |
+| `crond`     | Cron daemon for scheduled tasks                          |
+| `sshd`      | SSH server (if enabled)                                  |
 
 ---
 

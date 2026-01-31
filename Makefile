@@ -9,4 +9,4 @@ logs:
 	docker compose logs -f
 
 shell:
-	docker compose exec moltbot-gateway bash
+	docker compose exec openclaw-gateway bash

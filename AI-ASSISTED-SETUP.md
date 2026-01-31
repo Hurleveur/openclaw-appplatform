@@ -37,16 +37,16 @@ The simplest deployment - gateway with CLI access only via `doctl apps console`.
 ```
 Deploy OpenClaw to DigitalOcean App Platform using the CLI-only configuration.
 
-Use the app spec from https://github.com/digitalocean-labs/moltbot-appplatform with:
+Use the app spec from https://github.com/digitalocean-labs/openclaw-appplatform with:
 - Instance size: basic-xxs (1 CPU, 512MB shared)
 - All feature flags disabled (ENABLE_NGROK=false, ENABLE_TAILSCALE=false, ENABLE_SPACES=false)
 - ENABLE_UI=true (so we can use UI later if needed)
 
 After deployment:
 1. Use do-app-sandbox to connect to the container
-2. Run: mb gateway health --url ws://127.0.0.1:18789
-3. Run: mb channels status --probe
-4. Show me the gateway token from: cat /run/s6/container_environment/MOLTBOT_GATEWAY_TOKEN
+2. Run: openclaw gateway health --url ws://127.0.0.1:18789
+3. Run: openclaw channels status --probe
+4. Show me the gateway token from: cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN
 
 Reference the do-app-platform-skills for deployment best practices.
 ```
@@ -55,11 +55,11 @@ Reference the do-app-platform-skills for deployment best practices.
 
 ```bash
 # Connect to console
-doctl apps console <app-id> moltbot
+doctl apps console <app-id> openclaw
 
 # In console, verify:
-mb gateway health --url ws://127.0.0.1:18789
-mb channels status --probe
+openclaw gateway health --url ws://127.0.0.1:18789
+openclaw channels status --probe
 ```
 
 ---
@@ -70,7 +70,7 @@ Public URL access to the Control UI via ngrok tunnel.
 
 ### Prompt
 
-```
+
 Upgrade my OpenClaw deployment to Stage 2 with ngrok for public access.
 
 Update the app configuration:
@@ -118,12 +118,12 @@ Update the app configuration:
 - Set ENABLE_NGROK=false
 - Set ENABLE_TAILSCALE=true
 - Add TS_AUTHKEY (I'll provide it)
-- Set STABLE_HOSTNAME=moltbot
+- Set STABLE_HOSTNAME=openclaw
 
 After deployment:
 1. Verify Tailscale is connected
 2. Show me the Tailscale hostname
-3. Verify I can access via https://moltbot.<my-tailnet>.ts.net
+3. Verify I can access via https://openclaw.<my-tailnet>.ts.net
 
 Reference do-app-platform-skills for Tailscale integration.
 ```
@@ -140,7 +140,7 @@ Reference do-app-platform-skills for Tailscale integration.
 tailscale status
 
 # Access via browser
-https://moltbot.<your-tailnet>.ts.net
+https://openclaw.<your-tailnet>.ts.net
 ```
 
 ---
@@ -180,7 +180,7 @@ Setting up WhatsApp requires scanning a QR code, which is challenging for AI ass
 
 ### The Challenge
 
-- The `mb channels login` command displays a QR code and waits for scanning
+- The `openclaw channels login` command displays a QR code and waits for scanning
 - This blocks the terminal, preventing the AI from getting a prompt back
 - The QR code needs to be visible for the user to scan
 
@@ -201,16 +201,16 @@ Help me connect WhatsApp to my OpenClaw deployment.
 
 Use the do-app-sandbox SDK with pexpect to:
 1. Connect to my OpenClaw container (app-id: <app-id>)
-2. First logout any existing session: mb channels logout --channel whatsapp
-3. Restart moltbot: /command/s6-svc -r /run/service/moltbot
+2. First logout any existing session: openclaw channels logout --channel whatsapp
+3. Restart openclaw: /command/s6-svc -r /run/service/openclaw
 4. Run the login command and stream output to a local file so I can see the QR code
 5. Tell me to open the file and scan the QR code with my WhatsApp
 6. Wait for "linked" confirmation
-7. Restart moltbot service
-8. Verify connection: mb channels status --probe
+7. Restart openclaw service
+8. Verify connection: openclaw channels status --probe
 9. Send me a test message to verify everything works
 
-My phone number is: <your-phone>
+My phone nuopenclawer is: <your-phone>
 
 Reference the CHEATSHEET.md for the correct commands.
 ```
@@ -225,7 +225,7 @@ OUTPUT_FILE = "/path/to/qr-output.txt"
 
 # Spawn console session
 child = pexpect.spawn(
-    'doctl', ['apps', 'console', '<app-id>', 'moltbot'],
+    'doctl', ['apps', 'console', '<app-id>', 'openclaw'],
     encoding='utf-8',
     timeout=180
 )
@@ -238,7 +238,7 @@ child.logfile_read = logfile
 child.expect(r'[@#\$] ', timeout=30)
 
 # Run login command
-child.sendline('mb channels login --channel whatsapp')
+child.sendline('openclaw channels login --channel whatsapp')
 
 print(f"QR code being written to: {OUTPUT_FILE}")
 print("Open this file to scan the QR code!")
@@ -255,14 +255,14 @@ child.close()
 
 ```bash
 # Check channel status
-mb channels status --probe
+openclaw channels status --probe
 # Should show: WhatsApp default: enabled, configured, linked, running, connected
 
 # Send test message
-mb message send --channel whatsapp --target "+1234567890" --message "Hello from OpenClaw!"
+openclaw message send --channel whatsapp --target "+1234567890" --message "Hello from OpenClaw!"
 
 # Check for reply in logs
-tail -f /data/.moltbot/logs/gateway.log
+tail -f /data/.openclaw/logs/gateway.log
 ```
 
 ---
@@ -307,28 +307,28 @@ See `.github/workflows/deploy.yml` for automated deployment on push.
 ### Important Commands
 
 ```bash
-# Always use mb wrapper in console
-mb <command>
+# Always use openclaw wrapper in console
+openclaw <command>
 
 # Service management
-/command/s6-svc -r /run/service/moltbot    # Restart
-/command/s6-svc -d /run/service/moltbot    # Stop
-/command/s6-svc -u /run/service/moltbot    # Start
+/command/s6-svc -r /run/service/openclaw    # Restart
+/command/s6-svc -d /run/service/openclaw    # Stop
+/command/s6-svc -u /run/service/openclaw    # Start
 
 # View config
-cat /data/.moltbot/moltbot.json | jq .
+cat /data/.openclaw/openclaw.json | jq .
 
 # View token
-cat /run/s6/container_environment/MOLTBOT_GATEWAY_TOKEN
+cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN
 ```
 
 ### Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| "Command not found" in console | Use `mb` wrapper instead of `moltbot` |
-| Gateway not starting | Check logs: `tail -100 /data/.moltbot/logs/gateway.log` |
-| WhatsApp disconnected | Re-run `mb channels login` and scan QR |
+| "Command not found" in console | Use `openclaw` wrapper instead of `openclaw` |
+| Gateway not starting | Check logs: `tail -100 /data/.openclaw/logs/gateway.log` |
+| WhatsApp disconnected | Re-run `openclaw channels login` and scan QR |
 | ngrok URL not working | Restart ngrok: `/command/s6-svc -r /run/service/ngrok` |
 
 ### External Resources

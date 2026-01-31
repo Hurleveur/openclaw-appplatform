@@ -1,0 +1,13 @@
+#!/command/with-contenv bash
+# OpenClaw gateway service
+
+echo "[openclaw] Starting openclaw gateway..."
+
+# Run as openclaw user with proper environment
+export HOME=/home/openclaw
+exec s6-setuidgid openclaw bash -c '
+  export HOME=/home/openclaw
+  source /home/openclaw/.bashrc
+  source /home/openclaw/.profile
+  openclaw gateway --allow-unconfigured
+' > /proc/1/fd/1 2>&1

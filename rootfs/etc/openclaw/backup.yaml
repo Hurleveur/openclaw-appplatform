@@ -1,5 +1,5 @@
 # OpenClaw Backup Configuration
-# Users can override this file in their rootfs/etc/moltbot/backup.yaml
+# Users can override this file in their rootfs/etc/openclaw/backup.yaml
 
 # Restic repository location (S3-compatible)
 # Environment variables are expanded at runtime
@@ -13,7 +13,7 @@ paths:
       - "*.lock"
       - "*.pid"
       - "*.sock"
-  - path: /data/.moltbot
+  - path: /data/.openclaw
     exclude:
       - "*.lock"
       - "*.pid"

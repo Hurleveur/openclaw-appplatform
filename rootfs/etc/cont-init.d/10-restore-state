@@ -6,11 +6,11 @@ for f in /run/s6/container_environment/*; do
   [ -f "$f" ] && export "$(basename $f)"="$(cat $f)"
 done
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
 
 # Ensure directories exist (only if variables are set)
-[ -n "$MOLTBOT_STATE_DIR" ] && mkdir -p "$MOLTBOT_STATE_DIR"
-[ -n "$MOLTBOT_WORKSPACE_DIR" ] && mkdir -p "$MOLTBOT_WORKSPACE_DIR"
+[ -n "$openclaw_STATE_DIR" ] && mkdir -p "$openclaw_STATE_DIR"
+[ -n "$openclaw_WORKSPACE_DIR" ] && mkdir -p "$openclaw_WORKSPACE_DIR"
 [ -n "$TS_STATE_DIR" ] && mkdir -p "$TS_STATE_DIR"
 
 # Check if persistence is configured
@@ -73,14 +73,14 @@ for i in $(seq 0 $((PATH_COUNT - 1))); do
   fi
 done
 
-# Fix ownership on moltbot directories (restored as root, needs moltbot user)
-if [ -n "$MOLTBOT_STATE_DIR" ] && [ -d "$MOLTBOT_STATE_DIR" ]; then
-  chown -R moltbot:moltbot "$MOLTBOT_STATE_DIR"
+# Fix ownership on openclaw directories (restored as root, needs openclaw user)
+if [ -n "$openclaw_STATE_DIR" ] && [ -d "$openclaw_STATE_DIR" ]; then
+  chown -R openclaw:openclaw "$openclaw_STATE_DIR"
 fi
 
 # Fix ownership on tailscale directory
 if [ -n "$TS_STATE_DIR" ] && [ -d "$TS_STATE_DIR" ]; then
-  chown -R moltbot:moltbot "$TS_STATE_DIR"
+  chown -R openclaw:openclaw "$TS_STATE_DIR"
   chmod 750 "$TS_STATE_DIR"
 fi
 

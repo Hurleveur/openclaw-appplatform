@@ -1,7 +1,7 @@
 #!/command/with-contenv bash
 # Setup restic for DO Spaces backup
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
 
 # Skip if persistence not configured
 if [ -z "$RESTIC_SPACES_ACCESS_KEY_ID" ] || [ -z "$RESTIC_SPACES_BUCKET" ]; then
@@ -11,20 +11,20 @@ fi
 
 echo "[setup-restic] Configuring restic for DO Spaces..."
 
-export RESTIC_HOST=${STABLE_HOSTNAME:-moltbot}
+export RESTIC_HOST=${STABLE_HOSTNAME:-openclaw}
 
 
 # Set restic password (from env or generate a persistent one)
 if [ -z "$RESTIC_PASSWORD" ]; then
   # Generate a password and store it for future runs
-  if [ -f "$MOLTBOT_STATE_DIR/.restic-password" ]; then
-    RESTIC_PASSWORD=$(cat "$MOLTBOT_STATE_DIR/.restic-password")
+  if [ -f "$openclaw_STATE_DIR/.restic-password" ]; then
+    RESTIC_PASSWORD=$(cat "$openclaw_STATE_DIR/.restic-password")
   else
     RESTIC_PASSWORD="$RESTIC_PASSWORD"
-    mkdir -p "$MOLTBOT_STATE_DIR"
-    echo "$RESTIC_PASSWORD" > "$MOLTBOT_STATE_DIR/.restic-password"
-    chmod 600 "$MOLTBOT_STATE_DIR/.restic-password"
-    echo "[setup-restic] Generated new restic password (stored in $MOLTBOT_STATE_DIR/.restic-password)"
+    mkdir -p "$openclaw_STATE_DIR"
+    echo "$RESTIC_PASSWORD" > "$openclaw_STATE_DIR/.restic-password"
+    chmod 600 "$openclaw_STATE_DIR/.restic-password"
+    echo "[setup-restic] Generated new restic password (stored in $openclaw_STATE_DIR/.restic-password)"
   fi
 fi
 

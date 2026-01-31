@@ -1,6 +1,6 @@
 #!/bin/bash
 # Prune old snapshots using restic forget
-# Reads retention policy from /etc/moltbot/backup.yaml
+# Reads retention policy from /etc/openclaw/backup.yaml
 
 set -e
 
@@ -9,7 +9,7 @@ for f in /run/s6/container_environment/RESTIC_*; do
   [ -f "$f" ] && export "$(basename $f)"="$(cat $f)"
 done
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
 QUIET=""
 
 # Parse arguments

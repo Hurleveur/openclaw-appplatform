@@ -1,17 +1,17 @@
 # OpenClaw CLI Cheat Sheet
 
-## The `mb` Command
+## The `openclaw` Command
 
-**IMPORTANT:** In console sessions, always use `mb` instead of `moltbot` directly.
+**IMPORTANT:** In console sessions, always use `openclaw` instead of `openclaw` directly.
 
-The `mb` wrapper script runs moltbot commands as the correct user with proper environment. Without it, you'll get "command not found" errors when running as root.
+The `openclaw` wrapper script runs openclaw commands as the correct user with proper environment. Without it, you'll get "command not found" errors when running as root.
 
 ```bash
-# ✅ Correct - use mb
-mb channels status --probe
+# ✅ Correct - use openclaw
+openclaw channels status --probe
 
-# ❌ Wrong - moltbot not in root's PATH
-moltbot channels status --probe
+# ❌ Wrong - openclaw not in root's PATH
+openclaw channels status --probe
 ```
 
 ---
@@ -20,7 +20,7 @@ moltbot channels status --probe
 
 ```bash
 doctl apps list                              # List apps, get app ID
-doctl apps console <app-id> moltbot          # Open console session
+doctl apps console <app-id> openclaw          # Open console session
 ```
 
 ---
@@ -28,8 +28,8 @@ doctl apps console <app-id> moltbot          # Open console session
 ## Gateway Status
 
 ```bash
-mb gateway health --url ws://127.0.0.1:18789      # Check gateway is running
-mb gateway status                                  # Gateway info
+openclaw gateway health --url ws://127.0.0.1:18789      # Check gateway is running
+openclaw gateway status                                  # Gateway info
 ```
 
 ---
@@ -37,10 +37,10 @@ mb gateway status                                  # Gateway info
 ## Configuration
 
 ```bash
-cat /data/.moltbot/moltbot.json | jq .            # Pretty print full config
-cat /data/.moltbot/moltbot.json | jq .gateway     # Gateway section
-cat /data/.moltbot/moltbot.json | jq .plugins     # Plugins section
-cat /data/.moltbot/moltbot.json | jq .models      # Models/providers
+cat /data/.openclaw/openclaw.json | jq .            # Pretty print full config
+cat /data/.openclaw/openclaw.json | jq .gateway     # Gateway section
+cat /data/.openclaw/openclaw.json | jq .plugins     # Plugins section
+cat /data/.openclaw/openclaw.json | jq .models      # Models/providers
 ```
 
 ---
@@ -48,8 +48,8 @@ cat /data/.moltbot/moltbot.json | jq .models      # Models/providers
 ## Channel Status
 
 ```bash
-mb channels status                                # Basic channel status
-mb channels status --probe                        # Probe all channels (detailed)
+openclaw channels status                                # Basic channel status
+openclaw channels status --probe                        # Probe all channels (detailed)
 ```
 
 ---
@@ -57,12 +57,12 @@ mb channels status --probe                        # Probe all channels (detailed
 ## WhatsApp Setup
 
 ```bash
-mb channels login                                 # Start QR code linking
+openclaw channels login                                 # Start QR code linking
                                                   # Scan with WhatsApp app:
                                                   # Settings > Linked Devices > Link
 
-/command/s6-svc -r /run/service/moltbot           # Restart after linking
-mb channels status --probe                        # Verify connected
+/command/s6-svc -r /run/service/openclaw           # Restart after linking
+openclaw channels status --probe                        # Verify connected
 ```
 
 ---
@@ -71,18 +71,18 @@ mb channels status --probe                        # Verify connected
 
 ```bash
 # WhatsApp
-mb message send --channel whatsapp --target "+14085551234" --message "Hello!"
+openclaw message send --channel whatsapp --target "+14085551234" --message "Hello!"
 
 # With media
-mb message send --channel whatsapp --target "+14085551234" \
+openclaw message send --channel whatsapp --target "+14085551234" \
   --message "Check this out" --media /path/to/image.png
 
 # Telegram
-mb message send --channel telegram --target @username --message "Hello!"
-mb message send --channel telegram --target 123456789 --message "Hello!"
+openclaw message send --channel telegram --target @username --message "Hello!"
+openclaw message send --channel telegram --target 123456789 --message "Hello!"
 
 # Discord
-mb message send --channel discord --target channel:123456 --message "Hello!"
+openclaw message send --channel discord --target channel:123456 --message "Hello!"
 ```
 
 ---
@@ -90,11 +90,11 @@ mb message send --channel discord --target channel:123456 --message "Hello!"
 ## Service Management (s6-overlay)
 
 ```bash
-/command/s6-svc -r /run/service/moltbot           # Restart moltbot
+/command/s6-svc -r /run/service/openclaw           # Restart openclaw
 /command/s6-svc -r /run/service/ngrok             # Restart ngrok
 /command/s6-svc -r /run/service/tailscale         # Restart tailscale
-/command/s6-svc -d /run/service/moltbot           # Stop moltbot
-/command/s6-svc -u /run/service/moltbot           # Start moltbot
+/command/s6-svc -d /run/service/openclaw           # Stop openclaw
+/command/s6-svc -u /run/service/openclaw           # Start openclaw
 
 ls /run/service/                                  # List all services
 ```
@@ -104,9 +104,9 @@ ls /run/service/                                  # List all services
 ## Logs
 
 ```bash
-tail -f /data/.moltbot/logs/gateway.log           # Gateway logs (live)
-tail -100 /data/.moltbot/logs/gateway.log         # Last 100 lines
-mb logs --follow                                  # OpenClaw log command
+tail -f /data/.openclaw/logs/gateway.log           # Gateway logs (live)
+tail -100 /data/.openclaw/logs/gateway.log         # Last 100 lines
+openclaw logs --follow                                  # OpenClaw log command
 ```
 
 ---
@@ -114,8 +114,8 @@ mb logs --follow                                  # OpenClaw log command
 ## Environment & Tokens
 
 ```bash
-cat /run/s6/container_environment/MOLTBOT_GATEWAY_TOKEN   # Current token
-env | grep MOLTBOT                                # All moltbot env vars
+cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN   # Current token
+env | grep OPENCLAW                                # All openclaw env vars
 env | grep ENABLE                                 # Feature flags
 ```
 
@@ -134,13 +134,13 @@ curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 
 ```bash
 # Full system check
-mb gateway health --url ws://127.0.0.1:18789 && \
-mb channels status --probe && \
+openclaw gateway health --url ws://127.0.0.1:18789 && \
+openclaw channels status --probe && \
 echo "--- Config ---" && \
-cat /data/.moltbot/moltbot.json | jq .
+cat /data/.openclaw/openclaw.json | jq .
 
 # Check what's running
-ps aux | grep -E "(moltbot|ngrok|tailscale)"
+ps aux | grep -E "(openclaw|ngrok|tailscale)"
 
 # Disk usage
 df -h /data
@@ -151,9 +151,9 @@ df -h /data
 ## Pairing & Directory
 
 ```bash
-mb pairing list                                   # View pending pairing requests
-mb pairing approve <code>                         # Approve a pairing code
-mb directory search --query "john"                # Search contacts
+openclaw pairing list                                   # View pending pairing requests
+openclaw pairing approve <code>                         # Approve a pairing code
+openclaw directory search --query "john"                # Search contacts
 ```
 
 ---
@@ -161,8 +161,8 @@ mb directory search --query "john"                # Search contacts
 ## Agents
 
 ```bash
-mb agents list                                    # List configured agents
-mb agents status                                  # Agent status
+openclaw agents list                                    # List configured agents
+openclaw agents status                                  # Agent status
 ```
 
 ---
@@ -174,13 +174,13 @@ mb agents status                                  # Agent status
 restic snapshots
 
 # View latest snapshot for a specific path
-restic snapshots --path /data/.moltbot --latest 1
+restic snapshots --path /data/.openclaw --latest 1
 
 # Manually trigger backup
 /usr/local/bin/restic-backup
 
 # Manually restore a path
-restic restore latest --target / --include /data/.moltbot
+restic restore latest --target / --include /data/.openclaw
 
 # Check repository status
 restic check
@@ -197,8 +197,8 @@ restic stats
 ## Troubleshooting
 
 ```bash
-# Restart moltbot
-/command/s6-svc -r /run/service/moltbot
+# Restart openclaw
+/command/s6-svc -r /run/service/openclaw
 
 # Check if gateway port is listening
 ss -tlnp | grep 18789
@@ -219,9 +219,9 @@ ls /etc/services.d/*/dependencies.d/
 
 | Issue | Fix |
 |-------|-----|
-| "Gateway token not configured" | `jq .gateway.auth.token /data/.moltbot/moltbot.json` |
-| WhatsApp disconnected after restart | `mb channels login` (re-scan QR) or check if backup restored state |
+| "Gateway token not configured" | `jq .gateway.auth.token /data/.openclaw/openclaw.json` |
+| WhatsApp disconnected after restart | `openclaw channels login` (re-scan QR) or check if backup restored state |
 | ngrok tunnel not accessible | `curl http://127.0.0.1:4040/api/tunnels` then restart |
-| Command not found (as root) | Use `mb` wrapper instead of `moltbot` |
+| Command not found (as root) | Use `openclaw` wrapper instead of `openclaw` |
 | Backup not running | Check: `ps aux \| grep restic-backup` and logs in `/proc/1/fd/1` |
 | Data lost after restart | Verify `ENABLE_SPACES=true` and check `restic snapshots` |

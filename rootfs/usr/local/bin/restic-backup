@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unified backup script using restic
-# Reads configuration from /etc/moltbot/backup.yaml
+# Reads configuration from /etc/openclaw/backup.yaml
 
 set -e
 
@@ -9,7 +9,7 @@ for f in /run/s6/container_environment/RESTIC_*; do
   [ -f "$f" ] && export "$(basename $f)"="$(cat $f)"
 done
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
 QUIET=""
 
 # Parse arguments
@@ -62,24 +62,24 @@ log "Starting backup of $PATH_COUNT paths..."
 # Build restic backup command for each path
 for i in $(seq 0 $((PATH_COUNT - 1))); do
   BACKUP_PATH=$(yq -r ".paths[$i].path" "$CONFIG_FILE")
-  
+
   # Skip if path doesn't exist
   if [ ! -e "$BACKUP_PATH" ]; then
     log "Path does not exist, skipping: $BACKUP_PATH"
     continue
   fi
-  
+
   # Build exclude arguments
   EXCLUDE_ARGS=""
   EXCLUDE_COUNT=$(yq -r ".paths[$i].exclude | length // 0" "$CONFIG_FILE")
-  
+
   for j in $(seq 0 $((EXCLUDE_COUNT - 1))); do
     PATTERN=$(yq -r ".paths[$i].exclude[$j]" "$CONFIG_FILE")
     EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude=$PATTERN"
   done
-  
+
   log "Backing up: $BACKUP_PATH"
-  
+
   # Run restic backup
   if restic backup $EXCLUDE_ARGS "$BACKUP_PATH" 2>&1 | grep -v "^unchanged\|^modified\|^new" || true; then
     log "Completed: $BACKUP_PATH"

@@ -24,8 +24,8 @@ jobs:
           ENABLE_TAILSCALE=false
           ENABLE_NGROK=false
           ENABLE_SPACES=false
-          SSH_ENABLE=false
-          STABLE_HOSTNAME=moltbot-test
+          ENABLE_SSH=false
+          STABLE_HOSTNAME=openclaw-test
           # Keep container running even if services fail (0=continue, 1=SIGTERM, 2=SIGKILL)
           S6_BEHAVIOUR_IF_STAGE2_FAILS=0
           EOF
@@ -38,19 +38,19 @@ jobs:
 
       - name: Dump container status
         if: always()
-        run: docker ps -a --filter name=moltbot-test
+        run: docker ps -a --filter name=openclaw-test
 
       - name: Dump container logs
         if: always()
-        run: docker logs moltbot-test 2>&1 || true
+        run: docker logs openclaw-test 2>&1 || true
 
       - name: Dump process list
         if: always()
-        run: docker exec moltbot-test ps aux || echo "Container not running"
+        run: docker exec openclaw-test ps aux || echo "Container not running"
 
       - name: Verify container is running
         run: |
-          if ! docker ps --filter name=moltbot-test --filter status=running | grep -q moltbot-test; then
+          if ! docker ps --filter name=openclaw-test --filter status=running | grep -q openclaw-test; then
             echo "error: Container is not running"
             exit 1
           fi

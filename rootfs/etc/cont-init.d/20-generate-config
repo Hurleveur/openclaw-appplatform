@@ -1,5 +1,5 @@
 #!/command/with-contenv bash
-# Generate moltbot gateway configuration
+# Generate openclaw gateway configuration
 
 set -e
 
@@ -10,14 +10,14 @@ if [ "${ENABLE_NGROK:-false}" = "true" ] && [ "${ENABLE_TAILSCALE:-false}" = "tr
   echo "[generate-config] Defaulting to Tailscale (disable ENABLE_NGROK to silence this)."
 fi
 
-# Set HOME to moltbot's home so .profile uses correct paths
-export HOME=/home/moltbot
+# Set HOME to openclaw's home so .profile uses correct paths
+export HOME=/home/openclaw
 
-# Source moltbot profile for PATH setup
-. /home/moltbot/.profile
+# Source openclaw profile for PATH setup
+. /home/openclaw/.profile
 
-# Load nvm (needed for moltbot command)
-export NVM_DIR="/home/moltbot/.nvm"
+# Load nvm (needed for openclaw command)
+export NVM_DIR="/home/openclaw/.nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
   . "$NVM_DIR/nvm.sh"
   echo "[generate-config] nvm loaded successfully"
@@ -27,36 +27,36 @@ else
 fi
 
 # Ensure state directory exists with correct ownership
-mkdir -p "$MOLTBOT_STATE_DIR"
-chown moltbot:moltbot "$MOLTBOT_STATE_DIR"
+mkdir -p "$openclaw_STATE_DIR"
+chown openclaw:openclaw "$openclaw_STATE_DIR"
 
-DEFAULT_CONFIG="/etc/moltbot/moltbot.default.json"
-CONFIG_FILE="$MOLTBOT_STATE_DIR/moltbot.json"
+DEFAULT_CONFIG="/etc/openclaw/openclaw.default.json"
+CONFIG_FILE="$openclaw_STATE_DIR/openclaw.json"
 
 echo "[generate-config] Building config: $CONFIG_FILE"
 
 # Show version
-echo "[generate-config] Checking moltbot installation..."
-if ! command -v moltbot >/dev/null 2>&1; then
-  echo "[generate-config] ERROR: moltbot command not found in PATH" >&2
+echo "[generate-config] Checking openclaw installation..."
+if ! command -v openclaw >/dev/null 2>&1; then
+  echo "[generate-config] ERROR: openclaw command not found in PATH" >&2
   echo "[generate-config] PATH: $PATH" >&2
   echo "[generate-config] Node version: $(node --version 2>&1 || echo 'not found')" >&2
   exit 1
 fi
-echo "[generate-config] OpenClaw version: $(moltbot --version 2>/dev/null || echo 'unknown')"
+
+echo "[generate-config] OpenClaw version: $(openclaw --version 2>/dev/null || echo 'unknown')"
 
 # Generate a gateway token if not provided
-if [ -z "$MOLTBOT_GATEWAY_TOKEN" ]; then
-  export MOLTBOT_GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d '=/+' | head -c 32)
-  echo "[generate-config] Generated gateway token (ephemeral): $MOLTBOT_GATEWAY_TOKEN"
+if [ -z "$openclaw_GATEWAY_TOKEN" ]; then
+  export openclaw_GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d '=/+' | head -c 32)
+  echo "[generate-config] Generated gateway token (ephemeral): $openclaw_GATEWAY_TOKEN"
   echo "[generate-config] Save this token - you'll need it to connect to the Control UI"
 fi
 
-# Write token to s6 environment (both MOLTBOT_ and CLAWDBOT_ for compatibility)
+# Write token to s6 environment
 mkdir -p /run/s6/container_environment
-echo "$MOLTBOT_GATEWAY_TOKEN" > /run/s6/container_environment/MOLTBOT_GATEWAY_TOKEN
-echo "$MOLTBOT_GATEWAY_TOKEN" > /run/s6/container_environment/CLAWDBOT_GATEWAY_TOKEN
-echo "[generate-config] Gateway token configured (CLAWDBOT_GATEWAY_TOKEN)"
+echo "$openclaw_GATEWAY_TOKEN" > /run/s6/container_environment/openclaw_GATEWAY_TOKEN
+echo "[generate-config] Gateway token configured (openclaw_GATEWAY_TOKEN)"
 
 # Start with default config as base
 if [ -f "$DEFAULT_CONFIG" ]; then
@@ -83,10 +83,10 @@ fi
 
 # Add gateway auth token to config
 echo "[generate-config] Adding gateway.auth.token to config"
-jq --arg token "$MOLTBOT_GATEWAY_TOKEN" '.gateway.auth.token = $token | .gateway.auth.mode = "token"' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+jq --arg token "$openclaw_GATEWAY_TOKEN" '.gateway.auth.token = $token | .gateway.auth.mode = "token"' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
 
-# Ensure moltbot owns all state files
-chown -R moltbot:moltbot "$MOLTBOT_STATE_DIR"
+# Ensure openclaw owns all state files
+chown -R openclaw:openclaw "$openclaw_STATE_DIR"
 
 echo "[generate-config] Final config:"
 jq '.' "$CONFIG_FILE"

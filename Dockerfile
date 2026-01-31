@@ -12,18 +12,18 @@ COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
 COPY --from=tailscale /usr/local/bin/containerboot /usr/local/bin/containerboot
 
 ARG TARGETARCH=amd64
-ARG MOLTBOT_VERSION=2026.1.27-beta.1
+ARG OPENCLAW_VERSION=2026.1.30
 ARG S6_OVERLAY_VERSION=3.2.1.0
 ARG NODE_MAJOR=24
 ARG RESTIC_VERSION=0.17.3
 ARG NGROK_VERSION=3
 ARG YQ_VERSION=4.44.3
 ARG NVM_VERSION=0.40.4
-ARG MOLTBOT_STATE_DIR=/data/.moltbot
-ARG MOLTBOT_WORKSPACE_DIR=/data/workspace
+ARG OPENCLAW_STATE_DIR=/data/.openclaw
+ARG OPENCLAW_WORKSPACE_DIR=/data/workspace
 
-ENV MOLTBOT_STATE_DIR=${MOLTBOT_STATE_DIR}
-ENV MOLTBOT_WORKSPACE_DIR=${MOLTBOT_WORKSPACE_DIR}
+ENV OPENCLAW_STATE_DIR=${OPENCLAW_STATE_DIR}
+ENV OPENCLAW_WORKSPACE_DIR=${OPENCLAW_WORKSPACE_DIR}
 ENV NODE_ENV=production
 ENV DEBIAN_FRONTEND=noninteractive
 ENV S6_KEEP_ENV=1
@@ -91,26 +91,26 @@ RUN set -eux; \
 COPY rootfs/ /
 
 # Create non-root user (using existing home directory from rootfs)
-RUN useradd -d /home/moltbot -s /bin/bash moltbot \
-    && mkdir -p "${MOLTBOT_STATE_DIR}" "${MOLTBOT_WORKSPACE_DIR}" \
-    && ln -s ${MOLTBOT_STATE_DIR} /home/moltbot/.clawdbot \
-    && chown -R moltbot:moltbot /data \
-    && chown -R moltbot:moltbot /home/moltbot
+RUN useradd -d /home/openclaw -s /bin/bash openclaw \
+    && mkdir -p "${OPENCLAW_STATE_DIR}" "${OPENCLAW_WORKSPACE_DIR}" \
+    && ln -s ${OPENCLAW_STATE_DIR} /home/openclaw/.openclaw \
+    && chown -R openclaw:openclaw /data \
+    && chown -R openclaw:openclaw /home/openclaw
 
 # nvm and pnpm paths
-ENV NVM_DIR="/home/moltbot/.nvm"
-ENV PNPM_HOME="/home/moltbot/.local/share/pnpm"
+ENV NVM_DIR="/home/openclaw/.nvm"
+ENV PNPM_HOME="/home/openclaw/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
 
 # Create directories
-RUN mkdir -p ${PNPM_HOME} && chown -R moltbot:moltbot /home/moltbot/.local
+RUN mkdir -p ${PNPM_HOME} && chown -R openclaw:openclaw /home/openclaw/.local
 
-USER moltbot
+USER openclaw
 
 # Install Homebrew (Linuxbrew) - must be done as non-root user
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || true
 
-# Install nvm, Node.js LTS, pnpm, and moltbot
+# Install nvm, Node.js LTS, pnpm, and openclaw
 RUN export SHELL=/bin/bash  && export NVM_DIR="$HOME/.nvm" \
     && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
     && . "$NVM_DIR/nvm.sh" \
@@ -119,12 +119,12 @@ RUN export SHELL=/bin/bash  && export NVM_DIR="$HOME/.nvm" \
     && nvm alias default lts/* \
     && npm install -g pnpm \
     && pnpm setup \
-    && export PNPM_HOME="/home/moltbot/.local/share/pnpm" \
+    && export PNPM_HOME="/home/openclaw/.local/share/pnpm" \
     && export PATH="$PNPM_HOME:$PATH" \
-    && pnpm add -g "moltbot@${MOLTBOT_VERSION}"
+    && pnpm add -g "openclaw@${OPENCLAW_VERSION}"
 
-RUN echo "export MOLTBOT_STATE_DIR=${MOLTBOT_STATE_DIR}" >> /home/moltbot/.bashrc
-RUN echo "export MOLTBOT_WORKSPACE_DIR=${MOLTBOT_WORKSPACE_DIR}" >> /home/moltbot/.bashrc
+RUN echo "export OPENCLAW_STATE_DIR=${OPENCLAW_STATE_DIR}" >> /home/openclaw/.bashrc
+RUN echo "export OPENCLAW_WORKSPACE_DIR=${OPENCLAW_WORKSPACE_DIR}" >> /home/openclaw/.bashrc
 # Switch back to root for final setup
 USER root
 
@@ -132,7 +132,7 @@ USER root
 RUN if [ -d /home/ubuntu ]; then chown -R ubuntu:ubuntu /home/ubuntu; fi
 
 # Generate initial package selections list (for restore capability)
-RUN dpkg --get-selections > /etc/moltbot/dpkg-selections
+RUN dpkg --get-selections > /etc/openclaw/dpkg-selections
 
 
 # s6-overlay init (must run as root, services drop privileges as needed)

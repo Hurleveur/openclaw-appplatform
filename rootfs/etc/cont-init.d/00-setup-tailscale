@@ -11,7 +11,7 @@ if [ "${ENABLE_TAILSCALE:-false}" != "true" ]; then
 fi
 
 # Set defaults for TS_ variables and export them
-export TS_HOSTNAME=${STABLE_HOSTNAME:-moltbot}
+export TS_HOSTNAME=${STABLE_HOSTNAME:-openclaw}
 export TS_SOCKET=${TS_SOCKET:-/tmp/tailscaled.sock}
 export TS_USERSPACE=${TS_USERSPACE:-true}
 export TS_STATE_DIR=${TS_STATE_DIR:-/data/tailscale}

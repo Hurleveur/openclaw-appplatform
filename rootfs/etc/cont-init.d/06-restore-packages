@@ -1,8 +1,8 @@
 #!/command/with-contenv bash
 # Restore and reinstall user-installed packages from backup
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
-DPKG_SELECTIONS="/etc/moltbot/dpkg-selections"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
+DPKG_SELECTIONS="/etc/openclaw/dpkg-selections"
 
 # Source s6 container environment
 for f in /run/s6/container_environment/*; do

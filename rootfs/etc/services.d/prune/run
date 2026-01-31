@@ -6,7 +6,7 @@ for f in /run/s6/container_environment/*; do
   [ -f "$f" ] && export "$(basename $f)"="$(cat $f)"
 done
 
-CONFIG_FILE="/etc/moltbot/backup.yaml"
+CONFIG_FILE="/etc/openclaw/backup.yaml"
 
 # Skip if ENABLE_SPACES is not true
 if [ "${ENABLE_SPACES:-false}" != "true" ]; then
