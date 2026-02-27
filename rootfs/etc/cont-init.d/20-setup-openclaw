@@ -91,14 +91,14 @@ echo "[generate-config] Building config: $CONFIG_FILE"
 
 # Show version
 echo "[generate-config] Checking zeroclaw installation..."
-if ! command -v zeroclaw >/dev/null 2>&1; then
-  echo "[generate-config] ERROR: zeroclaw command not found in PATH" >&2
-  echo "[generate-config] PATH: $PATH" >&2
-  echo "[generate-config] Node version: $(node --version 2>&1 || echo 'not found')" >&2
-  exit 1
+# Try to source openclaw user's environment to access zeroclaw
+if su - openclaw -c "command -v zeroclaw >/dev/null 2>&1"; then
+  ZEROCLAW_VERSION=$(su - openclaw -c "zeroclaw --version 2>/dev/null" || echo "unknown")
+  echo "[generate-config] ZeroClaw version: $ZEROCLAW_VERSION"
+else
+  echo "[generate-config] WARNING: zeroclaw not found in openclaw user's PATH" >&2
+  echo "[generate-config] This is OK - ZeroClaw will be available when the gateway service starts" >&2
 fi
-
-echo "[generate-config] ZeroClaw version: $(zeroclaw --version 2>/dev/null || echo 'unknown')"
 
 # Generate a gateway token if not provided
 if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then
