@@ -8,6 +8,11 @@ source_env_prefix OPENCLAW_
 # OpenClaw requires any env vars consumed in config to exist or else it fails to start.
 persist_env_var OPENCLAW_ \
   GRADIENT_API_KEY=change-me \
+  PERPLEXITY_API_KEY=change-me \
+  SLACK_BOT_TOKEN=change-me \
+  SLACK_APP_TOKEN=change-me \
+  SLACK_SIGNING_SECRET=change-me \
+  GOOGLE_CREDENTIALS_BASE64="${GOOGLE_CREDENTIALS_BASE64:-}" \
   TAILSCALE_ENABLE="${TAILSCALE_ENABLE:-false}" \
   TS_SOCKET="${TS_SOCKET}" \
   TS_EXTRA_ARGS="${TS_EXTRA_ARGS}" \
@@ -15,11 +20,30 @@ persist_env_var OPENCLAW_ \
   TS_STATE_DIR="${TS_STATE_DIR}" \
   TS_USERSPACE="${TS_USERSPACE}" \
   OPENCLAW_STATE_DIR=/data/.openclaw \
-  OPENCLAW_WORKSPACE_DIR=/data/workspace
+  OPENCLAW_WORKSPACE_DIR=/data/workspace \
+  GOOGLE_CREDENTIALS_PATH="${GOOGLE_CREDENTIALS_PATH:-/data/.openclaw/google-credentials.json}"
 
 # Ensure directories exist (only if variables are set)
 [ -n "$OPENCLAW_STATE_DIR" ] && mkdir -p "$OPENCLAW_STATE_DIR"
 [ -n "$OPENCLAW_WORKSPACE_DIR" ] && mkdir -p "$OPENCLAW_WORKSPACE_DIR"
+# Create memory directory for journaling
+if [ -n "$OPENCLAW_STATE_DIR" ]; then
+  mkdir -p "$OPENCLAW_STATE_DIR/memory"
+  chown -R openclaw:openclaw "$OPENCLAW_STATE_DIR/memory"
+fi
+
+# Handle Google credentials if provided as base64
+if [ -n "$GOOGLE_CREDENTIALS_BASE64" ]; then
+  echo "[generate-config] Decoding Google credentials from GOOGLE_CREDENTIALS_BASE64"
+  if ! echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > "$OPENCLAW_STATE_DIR/google-credentials.json"; then
+    echo "[generate-config] WARNING: Failed to decode GOOGLE_CREDENTIALS_BASE64" >&2
+    rm -f "$OPENCLAW_STATE_DIR/google-credentials.json"
+  else
+    chown openclaw:openclaw "$OPENCLAW_STATE_DIR/google-credentials.json"
+    chmod 600 "$OPENCLAW_STATE_DIR/google-credentials.json"
+    echo "[generate-config] Google credentials saved to $OPENCLAW_STATE_DIR/google-credentials.json"
+  fi
+fi
 
 # Validate mutual exclusivity of ngrok and tailscale
 if [ "${ENABLE_NGROK:-false}" = "true" ] && [ "${TAILSCALE_ENABLE:-false}" = "true" ]; then
@@ -61,15 +85,15 @@ CONFIG_FILE="$OPENCLAW_STATE_DIR/openclaw.json"
 echo "[generate-config] Building config: $CONFIG_FILE"
 
 # Show version
-echo "[generate-config] Checking openclaw installation..."
-if ! command -v openclaw >/dev/null 2>&1; then
-  echo "[generate-config] ERROR: openclaw command not found in PATH" >&2
+echo "[generate-config] Checking zeroclaw installation..."
+if ! command -v zeroclaw >/dev/null 2>&1; then
+  echo "[generate-config] ERROR: zeroclaw command not found in PATH" >&2
   echo "[generate-config] PATH: $PATH" >&2
   echo "[generate-config] Node version: $(node --version 2>&1 || echo 'not found')" >&2
   exit 1
 fi
 
-echo "[generate-config] OpenClaw version: $(openclaw --version 2>/dev/null || echo 'unknown')"
+echo "[generate-config] ZeroClaw version: $(zeroclaw --version 2>/dev/null || echo 'unknown')"
 
 # Generate a gateway token if not provided
 if [ -z "$OPENCLAW_GATEWAY_TOKEN" ]; then

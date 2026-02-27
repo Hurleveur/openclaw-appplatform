@@ -71,7 +71,7 @@ spec:
           type: SECRET
         - key: SSH_ENABLE
           scope: RUN_TIME
-          value: "false"
+          value: "true"
         - key: GITHUB_USERNAME
           scope: RUN_TIME
           value: ""

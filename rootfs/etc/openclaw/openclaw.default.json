@@ -1,13 +1,341 @@
 {
+    "meta": {
+        "lastTouchedVersion": "2026.2.17",
+        "lastTouchedAt": "2026-02-27T00:00:00.000Z"
+    },
+    "wizard": {
+        "lastRunAt": null,
+        "lastRunVersion": null,
+        "lastRunCommand": null,
+        "lastRunMode": "local"
+    },
+    "update": {
+        "channel": "stable"
+    },
+    "browser": {
+        "enabled": false,
+        "headless": false,
+        "attachOnly": false
+    },
+    "ui": {
+        "assistant": {
+            "name": "zeroclaw"
+        }
+    },
     "gateway": {
         "mode": "local",
         "bind": "loopback",
         "controlUi": {
             "allowInsecureAuth": true
+        },
+        "auth": {
+            "mode": "token",
+            "allowTailscale": true
+        },
+        "tailscale": {
+            "mode": "serve",
+            "resetOnExit": true
+        }
+    },
+    "models": {
+        "mode": "merge",
+        "providers": {
+            "gradient": {
+                "baseUrl": "https://inference.do-ai.run/v1",
+                "apiKey": "${GRADIENT_API_KEY}",
+                "api": "openai-responses",
+                "models": [
+                    {
+                        "id": "gradient/openai-gpt-5.2",
+                        "name": "OpenAI GPT 5.2",
+                        "reasoning": true,
+                        "input": ["text", "image"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/openai-gpt-5-mini",
+                        "name": "OpenAI GPT 5 Mini",
+                        "reasoning": true,
+                        "input": ["text", "image"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/openai-gpt-5-nano",
+                        "name": "OpenAI GPT 5 Nano",
+                        "reasoning": true,
+                        "input": ["text", "image"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/anthropic-claude-4.5-sonnet",
+                        "name": "Anthropic Claude 4.5 Sonnet",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/anthropic-claude-4.6-sonnet",
+                        "name": "Anthropic Claude 4.6 Sonnet",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/anthropic-claude-opus-4.6",
+                        "name": "Anthropic Claude Opus 4.6",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "gradient/anthropic-claude-haiku-4.5",
+                        "name": "Anthropic Claude Haiku 4.5",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "llama3.3-70b-instruct",
+                        "name": "Llama 3.3 70B Instruct",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 128000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "deepseek-r1-distill-llama-70b",
+                        "name": "DeepSeek R1 Distill Llama 70B",
+                        "reasoning": true,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 128000,
+                        "maxTokens": 8192
+                    },
+                    {
+                        "id": "openai-gpt-oss-120b",
+                        "name": "OpenAI GPT OSS 120B",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 128000,
+                        "maxTokens": 8192
+                    }
+                ]
+            },
+            "perplexity": {
+                "baseUrl": "https://api.perplexity.ai",
+                "apiKey": "${PERPLEXITY_API_KEY}",
+                "api": "openai-completions",
+                "models": [
+                    {
+                        "id": "sonar-pro",
+                        "name": "Perplexity Sonar Pro",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192,
+                        "features": {
+                            "webSearch": true,
+                            "citations": true
+                        }
+                    },
+                    {
+                        "id": "sonar-reasoning",
+                        "name": "Perplexity Sonar Reasoning",
+                        "reasoning": true,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 8192,
+                        "features": {
+                            "webSearch": true,
+                            "citations": true
+                        }
+                    },
+                    {
+                        "id": "sonar",
+                        "name": "Perplexity Sonar",
+                        "reasoning": false,
+                        "input": ["text"],
+                        "cost": {
+                            "input": 0,
+                            "output": 0,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 200000,
+                        "maxTokens": 4096,
+                        "features": {
+                            "webSearch": true,
+                            "citations": true
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "agents": {
+        "defaults": {
+            "model": {
+                "primary": "gradient/openai-gpt-5.2"
+            },
+            "models": {
+                "gradient/openai-gpt-oss-120b": {},
+                "gradient/openai-gpt-5-mini": {},
+                "gradient/openai-gpt-5-nano": {},
+                "gradient/anthropic-claude-opus-4.6": {},
+                "gradient/anthropic-claude-haiku-4.5": {},
+                "gradient/anthropic-claude-4.6-sonnet": {}
+            },
+            "memorySearch": {
+                "enabled": true,
+                "provider": "gemini",
+                "model": "gemini-embedding-001"
+            },
+            "compaction": {
+                "mode": "safeguard",
+                "memoryFlush": {
+                    "enabled": true
+                }
+            },
+            "heartbeat": {
+                "model": "gradient/anthropic-claude-haiku-4.5"
+            },
+            "sandbox": {
+                "mode": "off"
+            }
+        }
+    },
+    "tools": {
+        "deny": [],
+        "agentToAgent": {
+            "allow": []
+        }
+    },
+    "commands": {
+        "native": "auto",
+        "nativeSkills": "auto",
+        "restart": true
+    },
+    "web": {
+        "enabled": false
+    },
+    "channels": {
+        "telegram": {
+            "enabled": false,
+            "dmPolicy": "pairing",
+            "replyToMode": "all",
+            "groupPolicy": "allowlist",
+            "streamMode": "partial",
+            "actions": {
+                "sendMessage": true,
+                "sticker": true
+            }
+        },
+        "whatsapp": {
+            "enabled": false
+        }
+    },
+    "memory": {
+        "backend": "builtin",
+        "citations": "on"
+    },
+    "skills": {
+        "entries": {
+            "healthcheck": {
+                "enabled": true
+            }
         }
     },
     "plugins": {
         "enabled": true,
+        "allow": [
+            "telegram",
+            "whatsapp",
+            "signal",
+            "discord",
+            "slack",
+            "memory",
+            "google-drive",
+            "google-calendar",
+            "gmail"
+        ],
         "entries": {
             "whatsapp": {
                 "enabled": true
@@ -20,55 +348,44 @@
             },
             "discord": {
                 "enabled": true
-            }
-        }
-    },
-    "models": {
-        "mode": "merge",
-        "providers": {
-            "gradient": {
-                "baseUrl": "https://inference.do-ai.run/v1",
-                "apiKey": "${GRADIENT_API_KEY}",
-                "api": "openai-completions",
-                "models": [
-                    {
-                        "id": "llama3.3-70b-instruct",
-                        "name": "Llama 3.3 70B Instruct",
-                        "reasoning": false,
-                        "input": [
-                            "text"
-                        ],
-                        "contextWindow": 128000,
-                        "maxTokens": 8192
-                    },
-                    {
-                        "id": "deepseek-r1-distill-llama-70b",
-                        "name": "DeepSeek R1 Distill Llama 70B",
-                        "reasoning": true,
-                        "input": [
-                            "text"
-                        ],
-                        "contextWindow": 128000,
-                        "maxTokens": 8192
-                    },
-                    {
-                        "id": "openai-gpt-oss-120b",
-                        "name": "OpenAI GPT OSS 120B",
-                        "reasoning": false,
-                        "input": [
-                            "text"
-                        ],
-                        "contextWindow": 128000,
-                        "maxTokens": 8192
-                    }
+            },
+            "slack": {
+                "enabled": true,
+                "mode": "socket",
+                "botToken": "${SLACK_BOT_TOKEN}",
+                "appToken": "${SLACK_APP_TOKEN}",
+                "signingSecret": "${SLACK_SIGNING_SECRET}"
+            },
+            "memory": {
+                "enabled": true,
+                "journalPath": "${OPENCLAW_STATE_DIR}/memory",
+                "fileFormat": "DD-MM-YYYY",
+                "autoWrite": true,
+                "includeMetadata": true
+            },
+            "google-drive": {
+                "enabled": true,
+                "credentials": "${GOOGLE_CREDENTIALS_PATH}",
+                "scopes": [
+                    "https://www.googleapis.com/auth/drive.file",
+                    "https://www.googleapis.com/auth/drive.readonly"
                 ]
-            }
-        }
-    },
-    "agents": {
-        "defaults": {
-            "model": {
-                "primary": "gradient/openai-gpt-oss-120b"
+            },
+            "google-calendar": {
+                "enabled": true,
+                "credentials": "${GOOGLE_CREDENTIALS_PATH}",
+                "scopes": [
+                    "https://www.googleapis.com/auth/calendar",
+                    "https://www.googleapis.com/auth/calendar.events"
+                ]
+            },
+            "gmail": {
+                "enabled": true,
+                "credentials": "${GOOGLE_CREDENTIALS_PATH}",
+                "scopes": [
+                    "https://www.googleapis.com/auth/gmail.readonly",
+                    "https://www.googleapis.com/auth/gmail.compose"
+                ]
             }
         }
     }
