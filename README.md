@@ -1,6 +1,6 @@
-# OpenClaw on DigitalOcean App Platform
+# ZeroClaw on DigitalOcean App Platform
 
-Deploy [OpenClaw](https://github.com/openclaw/openclaw) - a multi-channel AI messaging gateway - on DigitalOcean App Platform in minutes.
+Deploy the ZeroClaw gateway (zeroclaw) - a multi-channel AI messaging gateway - on DigitalOcean App Platform in minutes.
 
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/Hurleveur/openclaw-appplatform/tree/main)
 
@@ -26,7 +26,7 @@ Deploy [OpenClaw](https://github.com/openclaw/openclaw) - a multi-channel AI mes
 │  │ s6-overlay - Process supervision and init system             │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌─────────────┐  ┌───────────────────┐                            │
-│  │ Ubuntu      │  │ OpenClaw Gateway  │                            │
+│  │ Ubuntu      │  │ ZeroClaw Gateway  │                            │
 │  │ Noble+Node  │  │ WebSocket :18789  │                            │
 │  │ + nvm       │  │ + Control UI      │                            │
 │  └─────────────┘  └───────────────────┘                            │
@@ -37,7 +37,7 @@ Deploy [OpenClaw](https://github.com/openclaw/openclaw) - a multi-channel AI mes
 │  │  • Tailscale (TAILSCALE_ENABLE) - Private network            │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────────┐  │
-│  │ Optional: SSH Server (SSH_ENABLE=true)                        │  │
+│  │ Optional: SSH Server (SSH_ENABLE=false)                      │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────┘
          │                    │                    │
@@ -89,8 +89,8 @@ openclaw channels status --probe
 
 ### What's Included
 
-- ✅ OpenClaw gateway (WebSocket on port 18789)
-- ✅ CLI access via `openclaw` command
+- ✅ ZeroClaw gateway (WebSocket on port 18789)
+- ✅ CLI access via `openclaw` wrapper command
 - ✅ All channel plugins (WhatsApp, Telegram, Discord, etc.)
 - ❌ No web UI access (use CLI/TUI)
 - ❌ No public URL
@@ -188,7 +188,7 @@ https://openclaw.<your-tailnet>.ts.net
 
 ## Setting up Tailscale
 
-This section walks you through creating a Tailscale auth key for your OpenClaw deployment.
+This section walks you through creating a Tailscale auth key for your ZeroClaw deployment.
 
 ### 1. Sign in to Tailscale
 
@@ -236,7 +236,7 @@ envs:
 
 ### 7. Verify the Connection
 
-After deploying, your OpenClaw instance will appear in the **Machines** tab of your Tailscale admin console.
+After deploying, your ZeroClaw instance will appear in the **Machines** tab of your Tailscale admin console.
 
 You can access your instance at:
 ```
@@ -315,7 +315,7 @@ To customize, create `rootfs/etc/digitalocean/backup.yaml` in your repo and rebu
 
 ## AI-Assisted Setup
 
-Want an AI assistant to help deploy and configure OpenClaw? See **[AI-ASSISTED-SETUP.md](AI-ASSISTED-SETUP.md)** for:
+Want an AI assistant to help deploy and configure ZeroClaw? See **[AI-ASSISTED-SETUP.md](AI-ASSISTED-SETUP.md)** for:
 
 - Copy-paste prompts for each stage
 - WhatsApp channel setup (with QR code handling)
@@ -326,7 +326,7 @@ Want an AI assistant to help deploy and configure OpenClaw? See **[AI-ASSISTED-S
 
 ## CLI Cheat Sheet
 
-The `openclaw` command is a wrapper that runs openclaw with the correct user and environment. **Always use `openclaw` in console sessions.**
+The `openclaw` command is a wrapper that runs `zeroclaw` with the correct user and environment. **Always use `openclaw` in console sessions.**
 
 ```bash
 # Gateway
@@ -372,7 +372,7 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 | `ENABLE_TAILSCALE` | `false` | Enable Tailscale             |
 | `ENABLE_SPACES`    | `false` | Enable DO Spaces persistence |
 | `ENABLE_UI`        | `true`  | Enable web Control UI        |
-| `SSH_ENABLE`       | `false` | Enable SSH server            |
+| `SSH_ENABLE`       | `falsamlsee` | Enable SSH server            |
 
 ### ngrok (when ENABLE_NGROK=true)
 
@@ -418,7 +418,7 @@ On login, you'll see a colorful status display. Run `motd` anytime to refresh.
 |--------------|----------------------------------------------------|
 | 🖥️ System   | Hostname, uptime, load, memory, disk (color-coded) |
 | 🔗 Tailscale | Status, IP, relay, serve URL (if enabled)          |
-| 🦞 OpenClaw  | Health status, configured channels, agent count    |
+| 🦞 ZeroClaw  | Health status, configured channels, agent count    |
 | 📚 Links     | OpenClaw docs, App Platform docs, source repo      |
 
 ### Add Custom Init Scripts

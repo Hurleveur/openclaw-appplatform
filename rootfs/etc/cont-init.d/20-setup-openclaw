@@ -35,13 +35,18 @@ fi
 # Handle Google credentials if provided as base64
 if [ -n "$GOOGLE_CREDENTIALS_BASE64" ]; then
   echo "[generate-config] Decoding Google credentials from GOOGLE_CREDENTIALS_BASE64"
-  if ! echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > "$OPENCLAW_STATE_DIR/google-credentials.json"; then
+  GOOGLE_CREDENTIALS_DIR="$(dirname "$GOOGLE_CREDENTIALS_PATH")"
+  if ! mkdir -p "$GOOGLE_CREDENTIALS_DIR"; then
+    echo "[generate-config] ERROR: Failed to create credentials directory: $GOOGLE_CREDENTIALS_DIR" >&2
+    exit 1
+  fi
+  if ! echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > "$GOOGLE_CREDENTIALS_PATH"; then
     echo "[generate-config] WARNING: Failed to decode GOOGLE_CREDENTIALS_BASE64" >&2
-    rm -f "$OPENCLAW_STATE_DIR/google-credentials.json"
+    rm -f "$GOOGLE_CREDENTIALS_PATH"
   else
-    chown openclaw:openclaw "$OPENCLAW_STATE_DIR/google-credentials.json"
-    chmod 600 "$OPENCLAW_STATE_DIR/google-credentials.json"
-    echo "[generate-config] Google credentials saved to $OPENCLAW_STATE_DIR/google-credentials.json"
+    chown openclaw:openclaw "$GOOGLE_CREDENTIALS_PATH"
+    chmod 600 "$GOOGLE_CREDENTIALS_PATH"
+    echo "[generate-config] Google credentials saved to $GOOGLE_CREDENTIALS_PATH"
   fi
 fi
 

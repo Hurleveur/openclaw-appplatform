@@ -40,7 +40,14 @@ Enable these APIs for your project:
 
 Base64 encode your credentials file:
 ```bash
+# Linux (GNU coreutils)
 cat credentials.json | base64 -w 0
+
+# macOS (BSD base64)
+cat credentials.json | base64
+
+# Portable alternative
+openssl base64 -in credentials.json -A
 ```
 
 Add to `app.yaml`:
@@ -119,8 +126,7 @@ The plugins are configured in `/data/.openclaw/openclaw.json`:
         "enabled": true,
         "credentials": "/data/.openclaw/google-credentials.json",
         "scopes": [
-          "https://www.googleapis.com/auth/drive.file",
-          "https://www.googleapis.com/auth/drive.readonly"
+          "https://www.googleapis.com/auth/drive.file"
         ]
       },
       "google-calendar": {

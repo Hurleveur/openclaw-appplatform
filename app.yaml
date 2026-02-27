@@ -90,7 +90,7 @@ workers:
         type: SECRET
       - key: SSH_ENABLE
         scope: RUN_TIME
-        value: "true"
+        value: "false"
       - key: GITHUB_USERNAME
         scope: RUN_TIME
         value: ""
