@@ -18,5 +18,5 @@ fi
 # Configure ngrok with authtoken
 ngrok config add-authtoken "$NGROK_AUTHTOKEN"
 
-echo "[ngrok] Starting tunnel to gateway port 18789..."
-with_env_prefix NGROK_ -- ngrok http 18789 --log stdout
+echo "[ngrok] Starting tunnel to gateway port 42617..."
+with_env_prefix NGROK_ -- ngrok http 42617 --log stdout

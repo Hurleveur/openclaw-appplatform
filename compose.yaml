@@ -1,9 +1,9 @@
 services:
-  openclaw-gateway:
-    image: ${IMAGE:-openclaw-test:latest}
+  zeroclaw-gateway:
+    image: ${IMAGE:-zeroclaw-test:latest}
     build:
       context: .
       dockerfile: Dockerfile
     platform: ${PLATFORM:-linux/amd64}
-    container_name: ${STABLE_HOSTNAME:-openclaw-test}
+    container_name: ${STABLE_HOSTNAME:-zeroclaw-test}
     env_file: .env

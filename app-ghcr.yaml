@@ -2,16 +2,16 @@
 # WORK IN PROGRESS - GHCR container image deployment
 # This file is experimental. Use app.yaml (builds from source) for now.
 # =============================================================================
-name: openclaw
+name: zeroclaw
 region: tor # Available: nyc, ams, sfo, sgp, lon, fra, blr, syd, tor
 
 workers:
-  - name: openclaw
+  - name: zeroclaw
     # Deploy from pre-built GHCR image (faster than building from source)
     image:
       registry_type: GHCR
       registry: ghcr.io
-      repository: bikramkgupta/openclaw-appplatform
+      repository: Hurleveur/openclaw-appplatform
       tag: latest
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-2gb # Minimum 2GB required - 1GB causes heap overflow
@@ -19,7 +19,7 @@ workers:
       # ============================================================
       # REQUIRED
       # ============================================================
-      - key: OPENCLAW_GATEWAY_TOKEN
+      - key: API_KEY
         scope: RUN_TIME
         type: SECRET
 
@@ -60,7 +60,7 @@ workers:
         type: SECRET
       - key: TS_HOSTNAME
         scope: RUN_TIME
-        value: openclaw
+        value: zeroclaw
       - key: TS_USERSPACE
         scope: RUN_TIME
         value: "true"
@@ -84,7 +84,7 @@ workers:
         value: tor1.digitaloceanspaces.com
       - key: SPACES_BUCKET
         scope: RUN_TIME
-        value: openclaw-backup
+        value: zeroclaw-backup
       - key: RESTIC_PASSWORD
         scope: RUN_TIME
         type: SECRET
@@ -92,7 +92,7 @@ workers:
       # ============================================================
       # OPTIONAL
       # ============================================================
-      - key: OPENCLAW_GATEWAY_TOKEN
+      - key: API_KEY
         scope: RUN_TIME
         type: SECRET
       - key: GRADIENT_API_KEY

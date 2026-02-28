@@ -1,17 +1,17 @@
-# OpenClaw CLI Cheat Sheet
+# ZeroClaw CLI Cheat Sheet
 
-## The `openclaw` Command
+## The `zeroclaw` Command
 
-**IMPORTANT:** In console sessions, always use the `openclaw` wrapper command.
+**IMPORTANT:** In console sessions, always use the `zeroclaw` wrapper command.
 
-The `openclaw` wrapper script (in `/usr/local/bin/`) runs commands as the correct user with proper environment. Without it, you'll get "command not found" errors when running as root.
+The `zeroclaw` wrapper script (in `/usr/local/bin/`) runs commands as the correct user with proper environment. Without it, you'll get permission errors when running as root.
 
 ```bash
 # ✅ Correct - use the wrapper
-openclaw channels status --probe
+zeroclaw status
 
-# ❌ Wrong - running the binary directly won't work as root
-/home/openclaw/.local/bin/openclaw channels status --probe
+# ❌ Wrong - running the binary directly as root won't work correctly
+/usr/local/bin/zeroclaw status
 ```
 
 ---
@@ -20,7 +20,7 @@ openclaw channels status --probe
 
 ```bash
 doctl apps list                              # List apps, get app ID
-doctl apps console <app-id> openclaw          # Open console session
+doctl apps console <app-id> zeroclaw          # Open console session
 motd                                         # Show system info (MOTD)
 ```
 
@@ -29,8 +29,9 @@ motd                                         # Show system info (MOTD)
 ## Gateway Status
 
 ```bash
-openclaw gateway health --url ws://127.0.0.1:18789      # Check gateway is running
-openclaw gateway status                                  # Gateway info
+zeroclaw status                                          # Check gateway status
+zeroclaw --version                                       # Show version
+curl -s http://127.0.0.1:42617/health                    # HTTP health check
 ```
 
 ---
@@ -38,52 +39,10 @@ openclaw gateway status                                  # Gateway info
 ## Configuration
 
 ```bash
-cat /data/.openclaw/openclaw.json | jq .            # Pretty print full config
-cat /data/.openclaw/openclaw.json | jq .gateway     # Gateway section
-cat /data/.openclaw/openclaw.json | jq .plugins     # Plugins section
-cat /data/.openclaw/openclaw.json | jq .models      # Models/providers
-```
-
----
-
-## Channel Status
-
-```bash
-openclaw channels status                                # Basic channel status
-openclaw channels status --probe                        # Probe all channels (detailed)
-```
-
----
-
-## WhatsApp Setup
-
-```bash
-openclaw channels login                                 # Start QR code linking
-                                                  # Scan with WhatsApp app:
-                                                  # Settings > Linked Devices > Link
-
-/command/s6-svc -r /run/service/openclaw           # Restart after linking
-openclaw channels status --probe                        # Verify connected
-```
-
----
-
-## Send Messages
-
-```bash
-# WhatsApp
-openclaw message send --channel whatsapp --target "+14085551234" --message "Hello!"
-
-# With media
-openclaw message send --channel whatsapp --target "+14085551234" \
-  --message "Check this out" --media /path/to/image.png
-
-# Telegram
-openclaw message send --channel telegram --target @username --message "Hello!"
-openclaw message send --channel telegram --target 123456789 --message "Hello!"
-
-# Discord
-openclaw message send --channel discord --target channel:123456 --message "Hello!"
+cat /data/.zeroclaw/config.toml                          # View full config
+grep -A5 '\[gateway\]' /data/.zeroclaw/config.toml      # Gateway section
+grep 'default_provider' /data/.zeroclaw/config.toml      # Current provider
+grep 'default_model' /data/.zeroclaw/config.toml         # Current model
 ```
 
 ---
@@ -91,33 +50,24 @@ openclaw message send --channel discord --target channel:123456 --message "Hello
 ## Service Management (s6-overlay)
 
 ```bash
-/command/s6-svc -r /run/service/openclaw           # Restart openclaw
+/command/s6-svc -r /run/service/zeroclaw           # Restart zeroclaw
 /command/s6-svc -r /run/service/ngrok             # Restart ngrok
 /command/s6-svc -r /run/service/tailscale         # Restart tailscale
-/command/s6-svc -d /run/service/openclaw           # Stop openclaw
-/command/s6-svc -u /run/service/openclaw           # Start openclaw
+/command/s6-svc -d /run/service/zeroclaw           # Stop zeroclaw
+/command/s6-svc -u /run/service/zeroclaw           # Start zeroclaw
 
 ls /run/service/                                  # List all services
+/command/s6-svstat /run/service/zeroclaw           # Service status details
 ```
 
 ---
 
-## Logs
+## Environment & API Key
 
 ```bash
-tail -f /data/.openclaw/logs/gateway.log           # Gateway logs (live)
-tail -100 /data/.openclaw/logs/gateway.log         # Last 100 lines
-openclaw logs --follow                                  # OpenClaw log command
-```
-
----
-
-## Environment & Tokens
-
-```bash
-cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN   # Current token
-env | grep OPENCLAW                                # All openclaw env vars
-env | grep ENABLE                                 # Feature flags
+cat /run/s6/container_environment/API_KEY          # Current API key
+env | grep ZEROCLAW                                # All ZeroClaw env vars
+env | grep ENABLE                                  # Feature flags
 ```
 
 ---
@@ -138,35 +88,15 @@ curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 motd
 
 # Full system check
-openclaw gateway health --url ws://127.0.0.1:18789 && \
-openclaw channels status --probe && \
+zeroclaw status && \
 echo "--- Config ---" && \
-cat /data/.openclaw/openclaw.json | jq .
+cat /data/.zeroclaw/config.toml
 
 # Check what's running
-ps aux | grep -E "(openclaw|ngrok|tailscale)"
+ps aux | grep -E "(zeroclaw|ngrok|tailscale)"
 
 # Disk usage
 df -h /data
-```
-
----
-
-## Pairing & Directory
-
-```bash
-openclaw pairing list                                   # View pending pairing requests
-openclaw pairing approve <code>                         # Approve a pairing code
-openclaw directory search --query "john"                # Search contacts
-```
-
----
-
-## Agents
-
-```bash
-openclaw agents list                                    # List configured agents
-openclaw agents status                                  # Agent status
 ```
 
 ---
@@ -178,13 +108,13 @@ openclaw agents status                                  # Agent status
 restic snapshots
 
 # View latest snapshot for a specific path
-restic snapshots --path /data/.openclaw --latest 1
+restic snapshots --path /data/.zeroclaw --latest 1
 
 # Manually trigger backup
 /usr/local/bin/restic-backup
 
 # Manually restore a path
-restic restore latest --target / --include /data/.openclaw
+restic restore latest --target / --include /data/.zeroclaw
 
 # Check repository status
 restic check
@@ -201,17 +131,17 @@ restic stats
 ## Troubleshooting
 
 ```bash
-# Restart openclaw
-/command/s6-svc -r /run/service/openclaw
+# Restart zeroclaw
+/command/s6-svc -r /run/service/zeroclaw
 
 # Check if gateway port is listening
-ss -tlnp | grep 18789
+ss -tlnp | grep 42617
 
-# Test gateway WebSocket
-curl -I http://127.0.0.1:18789
+# Test gateway HTTP
+curl -I http://127.0.0.1:42617
 
 # Re-run config generation
-/etc/cont-init.d/20-setup-openclaw
+/etc/cont-init.d/20-setup-zeroclaw
 
 # Check service dependencies
 ls /etc/services.d/*/dependencies.d/
@@ -223,9 +153,8 @@ ls /etc/services.d/*/dependencies.d/
 
 | Issue | Fix |
 |-------|-----|
-| "Gateway token not configured" | `jq .gateway.auth.token /data/.openclaw/openclaw.json` |
-| WhatsApp disconnected after restart | `openclaw channels login` (re-scan QR) or check if backup restored state |
+| "API key not configured" | Check `grep api_key /data/.zeroclaw/config.toml` |
 | ngrok tunnel not accessible | `curl http://127.0.0.1:4040/api/tunnels` then restart |
-| Command not found (as root) | Use `openclaw` wrapper instead of `openclaw` |
+| Command not found (as root) | Use `zeroclaw` wrapper instead of direct binary |
 | Backup not running | Check: `ps aux \| grep restic-backup` and logs in `/proc/1/fd/1` |
 | Data lost after restart | Verify `ENABLE_SPACES=true` and check `restic snapshots` |

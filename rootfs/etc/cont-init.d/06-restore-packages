@@ -2,7 +2,7 @@
 # Restore and reinstall user-installed packages from backup
 source /etc/s6-overlay/lib/env-utils.sh
 
-DPKG_SELECTIONS="/etc/openclaw/dpkg-selections"
+DPKG_SELECTIONS="/etc/zeroclaw/dpkg-selections"
 
 source_env_prefix RESTIC_
 

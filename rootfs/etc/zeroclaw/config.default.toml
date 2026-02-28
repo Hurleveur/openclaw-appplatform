@@ -1,0 +1,20 @@
+# ZeroClaw Default Configuration
+# This file is used as the base config template.
+# The 20-setup-zeroclaw init script merges environment variables into this.
+
+# Workspace and state directories (overridden by env vars)
+workspace_dir = "/data/workspace"
+config_path = "/data/.zeroclaw/config.toml"
+
+# API key for the default provider (set via API_KEY or ZEROCLAW_API_KEY env var)
+api_key = ""
+
+# Default provider and model settings
+default_provider = "openrouter"
+default_model = "anthropic/claude-sonnet-4-20250514"
+default_temperature = 0.7
+
+[gateway]
+port = 42617
+host = "127.0.0.1"
+allow_public_bind = false

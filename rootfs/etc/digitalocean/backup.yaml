@@ -1,4 +1,4 @@
-# OpenClaw Backup Configuration
+# ZeroClaw Backup Configuration
 # Users can override via RESTIC_BACKUP_CONFIG_FILE env var
 
 # Restic repository location (S3-compatible)
@@ -18,7 +18,7 @@ paths:
       - "*.lock"
       - "*.pid"
       - "*.sock"
-  - path: /data/.openclaw
+  - path: /data/.zeroclaw
     exclude:
       - "*.lock"
       - "*.pid"

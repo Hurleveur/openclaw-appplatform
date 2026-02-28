@@ -48,7 +48,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Save dpkg selections before backup (for restore-packages)
-DPKG_SELECTIONS="/etc/openclaw/dpkg-selections"
+DPKG_SELECTIONS="/etc/zeroclaw/dpkg-selections"
 mkdir -p "$(dirname "$DPKG_SELECTIONS")"
 dpkg --get-selections > "$DPKG_SELECTIONS" 2>/dev/null || true
 

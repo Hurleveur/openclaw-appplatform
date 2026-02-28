@@ -1,0 +1,14 @@
+#!/bin/bash
+source /etc/update-motd.d/lib.sh
+
+echo -e "  � ${BOLD}ZeroClaw${NC}"
+echo -e "  ${DIM}─────────────────────────────────────${NC}"
+
+STATUS=$(zeroclaw status 2>/dev/null)
+if [ $? -eq 0 ]; then
+  printf "  ${CYAN}%-12s${NC} ${GREEN}✓ running${NC}\n" "Status:"
+else
+  printf "  ${CYAN}%-12s${NC} ${RED}✗ not running${NC}\n" "Status:"
+fi
+
+echo ""

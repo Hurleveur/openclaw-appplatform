@@ -29,7 +29,7 @@ wait_for_service "$CONTAINER" "backup" || exit 1
 
 # Create test data
 TEST_CONTENT="persistence-test-$(date +%s)"
-TEST_FILE="/data/.openclaw/test-persistence.txt"
+TEST_FILE="/data/.zeroclaw/test-persistence.txt"
 docker exec "$CONTAINER" bash -c "echo '$TEST_CONTENT' > '$TEST_FILE'"
 echo "✓ Test data created"
 
@@ -66,7 +66,7 @@ if [ "$RESTORED_CONTENT" != "$TEST_CONTENT" ]; then
     echo "error: Test data not restored correctly"
     echo "  Expected: $TEST_CONTENT"
     echo "  Got: $RESTORED_CONTENT"
-    docker exec "$CONTAINER" ls -la /data/.openclaw/ 2>/dev/null || true
+    docker exec "$CONTAINER" ls -la /data/.zeroclaw/ 2>/dev/null || true
     exit 1
 fi
 echo "✓ Test data restored successfully"

@@ -48,18 +48,18 @@ jobs:
         with:
           context: .
           load: true
-          tags: openclaw-test:latest
+          tags: zeroclaw-test:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Save Docker image
-        run: docker save openclaw-test:latest -o /tmp/openclaw-test.tar
+        run: docker save zeroclaw-test:latest -o /tmp/zeroclaw-test.tar
 
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
-          path: /tmp/openclaw-test.tar
+          path: /tmp/zeroclaw-test.tar
           retention-days: 1
 
   setup:
@@ -92,7 +92,7 @@ jobs:
           path: /tmp
 
       - name: Load Docker image
-        run: docker load -i /tmp/openclaw-test.tar
+        run: docker load -i /tmp/zeroclaw-test.tar
 
       - name: Install s3cmd
         if: matrix.config == 'persistence-enabled'
@@ -111,7 +111,7 @@ jobs:
             echo "Skipping: DO_SPACES credentials not configured"
             exit 0
           fi
-          BUCKET_NAME="openclaw-test-$(date +%s)-$$"
+          BUCKET_NAME="zeroclaw-test-$(date +%s)-$$"
           SPACES_REGION="sfo3"
           SPACES_ENDPOINT="${SPACES_REGION}.digitaloceanspaces.com"
 

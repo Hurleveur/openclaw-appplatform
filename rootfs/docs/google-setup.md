@@ -1,6 +1,6 @@
 # Google Services Integration
 
-This guide explains how to connect zeroclaw to Google Drive, Calendar, and Gmail.
+This guide explains how to connect ZeroClaw to Google Drive, Calendar, and Gmail.
 
 ## Prerequisites
 
@@ -63,10 +63,10 @@ envs:
 Copy the downloaded JSON to the container:
 ```bash
 # Using doctl console
-doctl apps console <app-id> openclaw
+doctl apps console <app-id> zeroclaw
 
 # In the container
-cat > /data/.openclaw/google-credentials.json << 'EOF'
+cat > /data/.zeroclaw/google-credentials.json << 'EOF'
 {
   "installed": {
     "client_id": "your-client-id.apps.googleusercontent.com",
@@ -83,40 +83,40 @@ EOF
 
 ### 5. Authenticate with Google
 
-Run the OAuth flow to authorize zeroclaw:
+Run the OAuth flow to authorize ZeroClaw:
 
 ```bash
 # In the container console
-openclaw plugins auth google-drive
-openclaw plugins auth google-calendar
-openclaw plugins auth gmail
+zeroclaw plugins auth google-drive
+zeroclaw plugins auth google-calendar
+zeroclaw plugins auth gmail
 ```
 
 Each command will:
 1. Display an authorization URL
 2. Ask you to visit the URL in your browser
 3. Prompt you to paste the authorization code
-4. Store the refresh token in `/data/.openclaw/`
+4. Store the refresh token in `/data/.zeroclaw/`
 
 ### 6. Verify Setup
 
 ```bash
 # Check plugin status
-openclaw plugins status
+zeroclaw plugins status
 
 # Test Drive access
-openclaw plugins test google-drive
+zeroclaw plugins test google-drive
 
 # Test Calendar access
-openclaw plugins test google-calendar
+zeroclaw plugins test google-calendar
 
 # Test Gmail access
-openclaw plugins test gmail
+zeroclaw plugins test gmail
 ```
 
 ## Configuration
 
-The plugins are configured in `/data/.openclaw/openclaw.json`:
+The plugins are configured in `/data/.zeroclaw/config.toml`.
 
 ```json
 {
@@ -124,14 +124,14 @@ The plugins are configured in `/data/.openclaw/openclaw.json`:
     "entries": {
       "google-drive": {
         "enabled": true,
-        "credentials": "/data/.openclaw/google-credentials.json",
+        "credentials": "/data/.zeroclaw/google-credentials.json",
         "scopes": [
           "https://www.googleapis.com/auth/drive.file"
         ]
       },
       "google-calendar": {
         "enabled": true,
-        "credentials": "/data/.openclaw/google-credentials.json",
+        "credentials": "/data/.zeroclaw/google-credentials.json",
         "scopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -139,7 +139,7 @@ The plugins are configured in `/data/.openclaw/openclaw.json`:
       },
       "gmail": {
         "enabled": true,
-        "credentials": "/data/.openclaw/google-credentials.json",
+        "credentials": "/data/.zeroclaw/google-credentials.json",
         "scopes": [
           "https://www.googleapis.com/auth/gmail.send",
           "https://www.googleapis.com/auth/gmail.readonly",
@@ -178,12 +178,12 @@ This means your Google authentication persists across container restarts.
 ## Troubleshooting
 
 ### "Credentials file not found"
-Ensure `/data/.openclaw/google-credentials.json` exists with proper JSON format.
+Ensure `/data/.zeroclaw/google-credentials.json` exists with proper JSON format.
 
 ### "Invalid grant" or "Token expired"
 Re-run the authentication flow:
 ```bash
-openclaw plugins auth google-drive
+zeroclaw plugins auth google-drive
 ```
 
 ### "Access not configured"
@@ -191,7 +191,7 @@ Make sure the API is enabled in GCP console for your project.
 
 ### Check logs
 ```bash
-tail -f /data/.openclaw/logs/gateway.log | grep -i google
+tail -f /data/.zeroclaw/logs/gateway.log | grep -i google
 ```
 
 ## Security Notes
@@ -199,7 +199,7 @@ tail -f /data/.openclaw/logs/gateway.log | grep -i google
 1. **Never commit credentials** to version control
 2. Use **SECRET** type in `app.yaml` for sensitive values
 3. **Limit OAuth scopes** to only what you need
-4. Use a **dedicated GCP project** for zeroclaw
+4. Use a **dedicated GCP project** for ZeroClaw
 5. **Enable backup encryption** with `RESTIC_PASSWORD` to protect stored tokens
 
 ## Usage Examples
@@ -214,4 +214,4 @@ Once set up, you can use natural language commands:
 "Add a reminder to my calendar for next Monday at 2pm"
 ```
 
-The zeroclaw agent will automatically use the appropriate Google plugin to fulfill these requests.
+The ZeroClaw agent will automatically use the appropriate Google plugin to fulfill these requests.

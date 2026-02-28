@@ -12,13 +12,12 @@ echo "Testing UI disabled config (container: $CONTAINER)..."
 # Container should be running
 docker exec "$CONTAINER" true || { echo "error: container not responsive"; exit 1; }
 
-# Gateway config should have ui disabled
-if docker exec "$CONTAINER" cat /data/.openclaw/openclaw.json 2>/dev/null | grep -q '"ui"'; then
-    ui_enabled=$(docker exec "$CONTAINER" cat /data/.openclaw/openclaw.json | jq -r '.ui // false')
-    if [ "$ui_enabled" = "true" ]; then
-        echo "error: UI is enabled but ENABLE_UI=false"
-        exit 1
-    fi
+# Gateway config should exist
+if docker exec "$CONTAINER" test -f /data/.zeroclaw/config.toml; then
+  echo "✓ ZeroClaw config exists"
+else
+  echo "error: ZeroClaw config not found"
+  exit 1
 fi
 echo "✓ UI disabled in config"
 

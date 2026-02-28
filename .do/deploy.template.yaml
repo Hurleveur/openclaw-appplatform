@@ -1,15 +1,15 @@
 spec:
-  name: openclaw
+  name: zeroclaw
   region: tor
   workers:
-    - name: openclaw
+    - name: zeroclaw
       dockerfile_path: /Dockerfile
       source_dir: /
       instance_count: 1
-      instance_size_slug: apps-s-1vcpu-2gb # Minimum 2GB required - 1GB causes heap overflow
+      instance_size_slug: apps-s-1vcpu-2gb # Minimum 2GB required
       git:
         branch: main
-        repo_clone_url: https://github.com/digitalocean-labs/openclaw-appplatform.git
+        repo_clone_url: https://github.com/Hurleveur/zeroclaw-appplatform.git
       envs:
         # Provide your Gradient inference key
         - key: GRADIENT_API_KEY
@@ -17,12 +17,12 @@ spec:
           type: SECRET
 
         # Required
-        - key: OPENCLAW_GATEWAY_TOKEN
+        - key: API_KEY
           scope: RUN_TIME
           type: SECRET
         - key: STABLE_HOSTNAME
           scope: RUN_TIME
-          value: openclaw
+          value: zeroclaw
 
         # Feature flags
         - key: ENABLE_NGROK
@@ -60,13 +60,13 @@ spec:
           value: tor1.digitaloceanspaces.com
         - key: RESTIC_SPACES_BUCKET
           scope: RUN_TIME
-          value: openclaw-backup
+          value: zeroclaw-backup
         - key: RESTIC_PASSWORD
           scope: RUN_TIME
           type: SECRET
 
         # Optional
-        - key: OPENCLAW_GATEWAY_TOKEN
+        - key: API_KEY
           scope: RUN_TIME
           type: SECRET
         - key: SSH_ENABLE

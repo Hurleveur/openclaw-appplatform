@@ -14,9 +14,9 @@ if [ "$(id -un)" = "openclaw" ]; then
   [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
   export PNPM_HOME="$HOME/.local/share/pnpm"
   export PATH="$PNPM_HOME:$PATH"
-  exec "$PNPM_HOME/zeroclaw" "$@"
+  exec "$PNPM_HOME/openclaw" "$@"
 elif [ "$(id -u)" = "0" ]; then
-  exec su - openclaw -c "zeroclaw$(printf ' %q' "$@")"
+  exec su - openclaw -c "openclaw$(printf ' %q' "$@")"
 else
-  exec sudo -u openclaw bash -l -c "zeroclaw$(printf ' %q' "$@")"
+  exec sudo -u openclaw bash -l -c "openclaw$(printf ' %q' "$@")"
 fi

@@ -54,8 +54,8 @@ echo "Testing my-new-config (container: $CONTAINER)..."
 docker exec "$CONTAINER" true || { echo "error: container not responsive"; exit 1; }
 
 # Check s6 services
-docker exec "$CONTAINER" s6-rc -a list | grep -q moltbot || { echo "error: moltbot service not supervised"; exit 1; }
-echo "✓ moltbot service supervised"
+docker exec "$CONTAINER" s6-rc -a list | grep -q zeroclaw || { echo "error: zeroclaw service not supervised"; exit 1; }
+echo "✓ zeroclaw service supervised"
 
 # Add your specific verifications here...
 

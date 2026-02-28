@@ -1,6 +1,6 @@
 # Environment Variables
 
-How environment variables are managed in the OpenClaw container using s6-overlay.
+How environment variables are managed in the ZeroClaw container using s6-overlay.
 
 ## Overview
 

@@ -27,14 +27,14 @@ permissions:
     group: root
     mode: "0600"
 
-  # OPENCLAW_ env directory and files readable by openclaw service
-  - path: /run/s6/container_environment/OPENCLAW_
-    user: openclaw
-    group: openclaw
+  # ZEROCLAW_ env directory and files readable by zeroclaw service
+  - path: /run/s6/container_environment/ZEROCLAW_
+    user: zeroclaw
+    group: zeroclaw
     mode: "0755"
-  - path: /run/s6/container_environment/OPENCLAW_/*
-    user: openclaw
-    group: openclaw
+  - path: /run/s6/container_environment/ZEROCLAW_/*
+    user: zeroclaw
+    group: zeroclaw
     mode: "0644"
 
   # TS_ env directory and files readable by root only
@@ -47,23 +47,23 @@ permissions:
     group: root
     mode: "0640"
 
-  # OpenClaw state directory
-  - path: /data/.openclaw
-    user: openclaw
-    group: openclaw
+  # ZeroClaw state directory
+  - path: /data/.zeroclaw
+    user: zeroclaw
+    group: zeroclaw
     mode: "0700"
-  - path: /data/.openclaw/**
-    user: openclaw
-    group: openclaw
-  - path: /data/.openclaw/openclaw.json
-    user: openclaw
-    group: openclaw
+  - path: /data/.zeroclaw/**
+    user: zeroclaw
+    group: zeroclaw
+  - path: /data/.zeroclaw/config.toml
+    user: zeroclaw
+    group: zeroclaw
     mode: "0600"
 
   # Tailscale state directory
   - path: /data/tailscale
-    user: openclaw
-    group: openclaw
+    user: zeroclaw
+    group: zeroclaw
     mode: "0750"
 
   # Cron directories and files

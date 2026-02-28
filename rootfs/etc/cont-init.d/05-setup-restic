@@ -23,14 +23,14 @@ echo "[setup-restic] Configuring restic for DO Spaces..."
 # Set restic password (from env or generate a persistent one)
 if [ -z "$RESTIC_PASSWORD" ]; then
   # Generate a password and store it for future runs
-  if [ -f "$OPENCLAW_STATE_DIR/.restic-password" ]; then
-    RESTIC_PASSWORD=$(cat "$OPENCLAW_STATE_DIR/.restic-password")
+    if [ -f "$ZEROCLAW_STATE_DIR/.restic-password" ]; then
+    RESTIC_PASSWORD=$(cat "$ZEROCLAW_STATE_DIR/.restic-password")
   else
     RESTIC_PASSWORD=$(openssl rand -base64 32)
-    mkdir -p "$OPENCLAW_STATE_DIR"
-    echo "$RESTIC_PASSWORD" > "$OPENCLAW_STATE_DIR/.restic-password"
-    chmod 600 "$OPENCLAW_STATE_DIR/.restic-password"
-    echo "[setup-restic] Generated new restic password (stored in $OPENCLAW_STATE_DIR/.restic-password)"
+    mkdir -p "$ZEROCLAW_STATE_DIR"
+    echo "$RESTIC_PASSWORD" > "$ZEROCLAW_STATE_DIR/.restic-password"
+    chmod 600 "$ZEROCLAW_STATE_DIR/.restic-password"
+    echo "[setup-restic] Generated new restic password (stored in $ZEROCLAW_STATE_DIR/.restic-password)"
   fi
 fi
 

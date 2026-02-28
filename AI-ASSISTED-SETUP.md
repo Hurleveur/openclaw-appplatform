@@ -1,16 +1,16 @@
-# AI-Assisted OpenClaw Setup
+# AI-Assisted ZeroClaw Setup
 
-This guide enables AI coding assistants (Claude Code, Cursor, Codex, Gemini, etc.) to deploy and configure OpenClaw on DigitalOcean App Platform.
+This guide enables AI coding assistants (Claude Code, Cursor, Codex, Gemini, etc.) to deploy and configure ZeroClaw on DigitalOcean App Platform.
 
 ## Overview
 
 - Uses [do-app-sandbox](https://pypi.org/project/do-app-sandbox/) SDK for remote execution on app container console
 - References [do-app-platform-skills](https://github.com/digitalocean-labs/do-app-platform-skills) for best practices
-- Follows progressive deployment stages (CLI → UI+ngrok → Tailscale)
+- Follows progressive deployment stages (CLI → ngrok → Tailscale)
 
 ## Prerequisites
 
-Before asking your AI assistant to deploy OpenClaw:
+Before asking your AI assistant to deploy ZeroClaw:
 
 ```bash
 # 1. Install and configure doctl
@@ -35,18 +35,17 @@ The simplest deployment - gateway with CLI access only via `doctl apps console`.
 ### Prompt
 
 ```
-Deploy OpenClaw to DigitalOcean App Platform using the CLI-only configuration.
+Deploy ZeroClaw to DigitalOcean App Platform using the CLI-only configuration.
 
-Use the app spec from https://github.com/digitalocean-labs/openclaw-appplatform with:
+Use the app spec from https://github.com/zeroclaw-labs/zeroclaw-appplatform with:
 - Instance size: basic-xxs (1 CPU, 512MB shared)
 - All feature flags disabled (ENABLE_NGROK=false, TAILSCALE_ENABLE=false, ENABLE_SPACES=false)
-- ENABLE_UI=true (so we can use UI later if needed)
 
 After deployment:
 1. Use do-app-sandbox to connect to the container
-2. Run: openclaw gateway health --url ws://127.0.0.1:18789
-3. Run: openclaw channels status --probe
-4. Show me the gateway token from: cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN
+2. Run: zeroclaw status
+3. Run: curl -s http://127.0.0.1:42617/health
+4. Show me the API key from: cat /run/s6/container_environment/API_KEY
 
 Reference the do-app-platform-skills for deployment best practices.
 ```
@@ -55,23 +54,23 @@ Reference the do-app-platform-skills for deployment best practices.
 
 ```bash
 # Connect to console
-doctl apps console <app-id> openclaw
+doctl apps console <app-id> zeroclaw
 
 # In console, verify:
-openclaw gateway health --url ws://127.0.0.1:18789
-openclaw channels status --probe
+zeroclaw status
+curl -s http://127.0.0.1:42617/health
 ```
 
 ---
 
-## Stage 2: Add Web UI + ngrok ($12/mo)
+## Stage 2: Add ngrok ($12/mo)
 
-Public URL access to the Control UI via ngrok tunnel.
+Public URL access to the gateway via ngrok tunnel.
 
 ### Prompt
 
 ```
-Upgrade my OpenClaw deployment to Stage 2 with ngrok for public access.
+Upgrade my ZeroClaw deployment to Stage 2 with ngrok for public access.
 
 Update the app configuration:
 - Instance size: basic-xs (1 CPU, 1GB shared)
@@ -82,7 +81,6 @@ After deployment:
 1. Connect via do-app-sandbox
 2. Get the ngrok URL: curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
 3. Verify gateway is accessible
-4. Show me how to access the Control UI
 
 Use do-app-platform-skills for the update process.
 ```
@@ -97,9 +95,6 @@ Use do-app-platform-skills for the update process.
 ```bash
 # Get ngrok URL
 curl -s http://127.0.0.1:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-
-# Access in browser: <ngrok-url>
-# Login with your gateway token
 ```
 
 ---
@@ -111,19 +106,19 @@ Private network access - most secure for production use.
 ### Prompt
 
 ```
-Upgrade my OpenClaw deployment to Stage 3 with Tailscale for private access.
+Upgrade my ZeroClaw deployment to Stage 3 with Tailscale for private access.
 
 Update the app configuration:
 - Instance size: basic-s (1 CPU, 2GB shared)
 - Set ENABLE_NGROK=false
 - Set TAILSCALE_ENABLE=true
 - Add TS_AUTHKEY (I'll provide it)
-- Set STABLE_HOSTNAME=openclaw
+- Set STABLE_HOSTNAME=zeroclaw
 
 After deployment:
 1. Verify Tailscale is connected
 2. Show me the Tailscale hostname
-3. Verify I can access via https://openclaw.<my-tailnet>.ts.net
+3. Verify I can access via https://zeroclaw.<my-tailnet>.ts.net
 
 Reference do-app-platform-skills for Tailscale integration.
 ```
@@ -140,7 +135,7 @@ Reference do-app-platform-skills for Tailscale integration.
 tailscale status
 
 # Access via browser
-https://openclaw.<your-tailnet>.ts.net
+https://zeroclaw.<your-tailnet>.ts.net
 ```
 
 ---
@@ -152,7 +147,7 @@ Add DO Spaces backup to preserve data across restarts.
 ### Prompt
 
 ```
-Add persistence to my OpenClaw deployment using DO Spaces.
+Add persistence to my ZeroClaw deployment using DO Spaces.
 
 I have a Spaces bucket ready:
 - Bucket: <bucket-name>
@@ -170,99 +165,6 @@ After deployment:
 2. Confirm data will persist across restarts
 
 Use do-app-platform-skills for Spaces configuration.
-```
-
----
-
-## Channel Setup: WhatsApp
-
-Setting up WhatsApp requires scanning a QR code, which is challenging for AI assistants.
-
-### The Challenge
-
-- The `openclaw channels login` command displays a QR code and waits for scanning
-- This blocks the terminal, preventing the AI from getting a prompt back
-- The QR code needs to be visible for the user to scan
-
-### AI Solution: pexpect + File Streaming
-
-The AI assistant can use this approach:
-
-1. Use `pexpect` to spawn the doctl console session
-2. Stream all output to a local file
-3. Ask the user to open the file and scan the QR code
-4. Monitor for "linked" confirmation
-5. Restart the service and verify
-
-### Prompt for WhatsApp Setup
-
-```
-Help me connect WhatsApp to my OpenClaw deployment.
-
-Use the do-app-sandbox SDK with pexpect to:
-1. Connect to my OpenClaw container (app-id: <app-id>)
-2. First logout any existing session: openclaw channels logout --channel whatsapp
-3. Restart openclaw: /command/s6-svc -r /run/service/openclaw
-4. Run the login command and stream output to a local file so I can see the QR code
-5. Tell me to open the file and scan the QR code with my WhatsApp
-6. Wait for "linked" confirmation
-7. Restart openclaw service
-8. Verify connection: openclaw channels status --probe
-9. Send me a test message to verify everything works
-
-My phone nuopenclawer is: <your-phone>
-
-Reference the CHEATSHEET.md for the correct commands.
-```
-
-### Example Implementation (for AI reference)
-
-```python
-import pexpect
-import time
-
-OUTPUT_FILE = "/path/to/qr-output.txt"
-
-# Spawn console session
-child = pexpect.spawn(
-    'doctl', ['apps', 'console', '<app-id>', 'openclaw'],
-    encoding='utf-8',
-    timeout=180
-)
-
-# Log output to file
-logfile = open(OUTPUT_FILE, 'w')
-child.logfile_read = logfile
-
-# Wait for prompt
-child.expect(r'[@#\$] ', timeout=30)
-
-# Run login command
-child.sendline('openclaw channels login --channel whatsapp')
-
-print(f"QR code being written to: {OUTPUT_FILE}")
-print("Open this file to scan the QR code!")
-
-# Wait for linked confirmation
-child.expect(['linked', 'Linked'], timeout=180)
-print("WhatsApp linked successfully!")
-
-logfile.close()
-child.close()
-```
-
-### Verification Steps
-
-```bash
-# Check channel status
-openclaw channels status --probe
-# Should show: WhatsApp default: enabled, configured, linked, running, connected
-
-# Send test message
-openclaw message send --channel whatsapp --target "+1234567890" --message "Hello from OpenClaw!"
-
-# Check for reply in logs
-tail -f /data/.openclaw/logs/gateway.log
 ```
 
 ---
@@ -307,33 +209,32 @@ See `.github/workflows/deploy.yml` for automated deployment on push.
 ### Important Commands
 
 ```bash
-# Always use openclaw wrapper in console
-openclaw <command>
+# Always use zeroclaw wrapper in console
+zeroclaw <command>
 
 # Service management
-/command/s6-svc -r /run/service/openclaw    # Restart
-/command/s6-svc -d /run/service/openclaw    # Stop
-/command/s6-svc -u /run/service/openclaw    # Start
+/command/s6-svc -r /run/service/zeroclaw    # Restart
+/command/s6-svc -d /run/service/zeroclaw    # Stop
+/command/s6-svc -u /run/service/zeroclaw    # Start
 
 # View config
-cat /data/.openclaw/openclaw.json | jq .
+cat /data/.zeroclaw/config.toml
 
-# View token
-cat /run/s6/container_environment/OPENCLAW_GATEWAY_TOKEN
+# View API key
+cat /run/s6/container_environment/API_KEY
 ```
 
 ### Troubleshooting
 
-| Issue                          | Solution                                                 |
-| ------------------------------ | -------------------------------------------------------- |
-| "Command not found" in console | Use `openclaw` wrapper instead of `openclaw`                   |
-| Gateway not starting           | Check logs: `tail -100 /data/.openclaw/logs/gateway.log` |
-| WhatsApp disconnected          | Re-run `openclaw channels login` and scan QR                   |
-| ngrok URL not working          | Restart ngrok: `/command/s6-svc -r /run/service/ngrok`   |
+| Issue                          | Solution                                                   |
+| ------------------------------ | ---------------------------------------------------------- |
+| "Command not found" in console | Use `zeroclaw` wrapper                                     |
+| Gateway not starting           | Check: `/command/s6-svstat /run/service/zeroclaw`          |
+| ngrok URL not working          | Restart ngrok: `/command/s6-svc -r /run/service/ngrok`     |
 
 ### External Resources
 
-- [OpenClaw Documentation](https://docs.openclaw.ai)
+- [ZeroClaw GitHub](https://github.com/zeroclaw-labs/zeroclaw)
 - [do-app-sandbox PyPI](https://pypi.org/project/do-app-sandbox/)
 - [do-app-platform-skills](https://github.com/digitalocean-labs/do-app-platform-skills)
 - [DigitalOcean App Platform Docs](https://docs.digitalocean.com/products/app-platform/)

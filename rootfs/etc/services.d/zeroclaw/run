@@ -1,0 +1,12 @@
+#!/bin/bash
+# ZeroClaw gateway service
+source /etc/s6-overlay/lib/env-utils.sh
+source_env_prefix ZEROCLAW_
+
+echo "[zeroclaw] Starting zeroclaw gateway..."
+# Allow zeroclaw to use tailscale
+if [ "${TAILSCALE_ENABLE:-false}" = "true" ]; then
+    tailscale set --operator=zeroclaw
+fi
+
+with_env_prefix --user zeroclaw ZEROCLAW_ -- zeroclaw gateway

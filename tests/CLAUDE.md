@@ -38,7 +38,7 @@ Tests are split into focused scripts for better organization and parallel CI exe
 ```
 tests/minimal/
 ├── 01-container.sh       # Container responsiveness
-├── 02-gateway.sh         # OpenClaw gateway running
+├── 02-gateway.sh         # ZeroClaw gateway running
 └── 03-ssh-disabled.sh    # SSH not running by default
 
 tests/ssh-enabled/

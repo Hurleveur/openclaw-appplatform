@@ -1,6 +1,6 @@
 # File Permissions
 
-How file permissions are managed in the OpenClaw container.
+How file permissions are managed in the ZeroClaw container.
 
 ## Overview
 
@@ -19,8 +19,8 @@ Each entry supports:
 | ------- | ---------------------------------------- | ------------------------- |
 | `path`  | File or glob pattern                     | `/docs/*`, `/run/s6/**/*` |
 | `mode`  | Unix permission mode                     | `"0644"`, `"0755"`        |
-| `user`  | Owner user                               | `root`, `openclaw`        |
-| `group` | Owner group                              | `root`, `openclaw`        |
+| `user`  | Owner user                               | `root`, `zeroclaw`        |
+| `group` | Owner group                              | `root`, `zeroclaw`        |
 | `umask` | Umask for new files created in this path | `"0077"`, `"0022"`        |
 
 ## Order Matters

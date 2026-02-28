@@ -1,4 +1,5 @@
 FROM tailscale/tailscale:stable AS tailscale
+FROM ghcr.io/zeroclaw-labs/zeroclaw:latest AS zeroclaw
 
 FROM ubuntu:noble
 
@@ -11,27 +12,26 @@ COPY --from=tailscale /usr/local/bin/tailscale /usr/local/bin/real_tailscale
 COPY --from=tailscale /usr/local/bin/tailscaled /usr/local/bin/tailscaled
 COPY --from=tailscale /usr/local/bin/containerboot /usr/local/bin/containerboot
 
+# Copy ZeroClaw binary from official image
+COPY --from=zeroclaw /usr/local/bin/zeroclaw /usr/local/bin/zeroclaw
+
 ARG TARGETARCH=amd64
-ARG ZEROCLAW_VERSION=latest
 ARG S6_OVERLAY_VERSION=3.2.1.0
-ARG NODE_MAJOR=24
 ARG RESTIC_VERSION=0.17.3
 ARG NGROK_VERSION=3
 ARG YQ_VERSION=4.44.3
-ARG NVM_VERSION=0.40.4
-ARG OPENCLAW_STATE_DIR=/data/.openclaw
-ARG OPENCLAW_WORKSPACE_DIR=/data/workspace
+ARG ZEROCLAW_STATE_DIR=/data/.zeroclaw
+ARG ZEROCLAW_WORKSPACE=/data/workspace
 
-ENV OPENCLAW_STATE_DIR=${OPENCLAW_STATE_DIR}
-ENV OPENCLAW_WORKSPACE_DIR=${OPENCLAW_WORKSPACE_DIR}
-ENV NODE_ENV=production
+ENV ZEROCLAW_STATE_DIR=${ZEROCLAW_STATE_DIR}
+ENV ZEROCLAW_WORKSPACE=${ZEROCLAW_WORKSPACE}
 ENV DEBIAN_FRONTEND=noninteractive
 ENV S6_KEEP_ENV=1
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
 ENV S6_LOGGING=0
 
-# Install OS deps + Node.js + sshd + restic + s6-overlay
+# Install OS deps + sshd + restic + s6-overlay
 RUN set -eux; \
   apt-get update; \
   apt-get install -y --no-install-recommends \
@@ -51,7 +51,6 @@ RUN set -eux; \
   bzip2 \
   openssh-server \
   cron \
-  build-essential \
   procps \
   xz-utils \
   ffmpeg; \
@@ -96,33 +95,16 @@ COPY rootfs/ /
 RUN source /etc/s6-overlay/lib/env-utils.sh && apply_permissions
 
 # Create non-root user (using existing home directory from rootfs)
-RUN useradd -m -s /bin/bash openclaw \
-  && mkdir -p "${OPENCLAW_STATE_DIR}" "${OPENCLAW_WORKSPACE_DIR}" \
-  && ln -s ${OPENCLAW_STATE_DIR} /home/openclaw/.openclaw \
-  && chown -R openclaw:openclaw /data \
-  && chown -R openclaw:openclaw /home/openclaw
+RUN useradd -m -s /bin/bash zeroclaw \
+  && mkdir -p "${ZEROCLAW_STATE_DIR}" "${ZEROCLAW_WORKSPACE}" \
+  && ln -s ${ZEROCLAW_STATE_DIR} /home/zeroclaw/.zeroclaw \
+  && chown -R zeroclaw:zeroclaw /data \
+  && chown -R zeroclaw:zeroclaw /home/zeroclaw
 
-# Create pnpm directory (nvm/pnpm paths are set in openclaw user's .bashrc, not globally)
-RUN mkdir -p /home/openclaw/.local/share/pnpm && chown -R openclaw:openclaw /home/openclaw/.local
-
-USER openclaw
+USER zeroclaw
 
 # Install Homebrew (Linuxbrew) - must be done as non-root user
 RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || true
-
-# Install nvm, Node.js LTS, pnpm, and zeroclaw
-RUN export SHELL=/bin/bash  && export NVM_DIR="$HOME/.nvm" \
-  && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
-  && . "$NVM_DIR/nvm.sh" \
-  && nvm install --lts \
-  && nvm use --lts \
-  && nvm alias default lts/* \
-  && npm install -g pnpm \
-  && pnpm setup \
-  && export PNPM_HOME="/home/openclaw/.local/share/pnpm" \
-  && export PATH="$PNPM_HOME:$PATH" \
-  && pnpm add -g "zeroclaw@${ZEROCLAW_VERSION}" \
-  && pnpm add -g googleapis@latest
 
 # Switch back to root for final setup
 USER root
@@ -131,7 +113,7 @@ USER root
 RUN if [ -d /home/ubuntu ]; then chown -R ubuntu:ubuntu /home/ubuntu; fi
 
 # Generate initial package selections list (for restore capability)
-RUN dpkg --get-selections > /etc/openclaw/dpkg-selections
+RUN dpkg --get-selections > /etc/zeroclaw/dpkg-selections
 
 
 # s6-overlay init (must run as root, services drop privileges as needed)

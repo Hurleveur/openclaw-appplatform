@@ -1,8 +1,8 @@
 # ZeroClaw on DigitalOcean App Platform
 
-Deploy the ZeroClaw gateway (zeroclaw) - a multi-channel AI messaging gateway - on DigitalOcean App Platform in minutes.
+Deploy [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw) - a Rust-based AI assistant gateway - on DigitalOcean App Platform in minutes.
 
-[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/Hurleveur/openclaw-appplatform/tree/main)
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/Hurleveur/zeroclaw-appplatform/tree/main)
 
 ## Quick Start: Choose Your Stage
 
@@ -21,19 +21,19 @@ Deploy the ZeroClaw gateway (zeroclaw) - a multi-channel AI messaging gateway - 
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│                      openclaw-appplatform                           │
+│                      zeroclaw-appplatform                          │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │ s6-overlay - Process supervision and init system             │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌─────────────┐  ┌───────────────────┐                            │
 │  │ Ubuntu      │  │ ZeroClaw Gateway  │                            │
-│  │ Noble+Node  │  │ WebSocket :18789  │                            │
-│  │ + nvm       │  │ + Control UI      │                            │
+│  │ Noble       │  │ HTTP :42617       │                            │
+│  │ + Rust bin  │  │                   │                            │
 │  └─────────────┘  └───────────────────┘                            │
 │  ┌──────────────────────────────────────────────────────────────┐  │
 │  │ Access Layer (choose one):                                   │  │
 │  │  • Console only (default) - doctl apps console               │  │
-│  │  • ngrok (ENABLE_NGROK) - Public tunnel to UI                │  │
+│  │  • ngrok (ENABLE_NGROK) - Public tunnel                      │  │
 │  │  • Tailscale (TAILSCALE_ENABLE) - Private network            │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────────┐  │
@@ -59,13 +59,13 @@ The simplest deployment. Access via `doctl apps console` and use CLI commands.
 
 ```bash
 # Clone the repo
-git clone https://github.com/digitalocean-labs/openclaw-appplatform
-cd openclaw-appplatform
+git clone https://github.com/zeroclaw-labs/zeroclaw-appplatform
+cd zeroclaw-appplatform
 
 # Edit app.yaml - set instance size for Stage 1
 # instance_size_slug: apps-s-1vcpu-2gb  # 1 CPU, 2GB (minimum for stable operation)
 
-# Set your OPENCLAW_GATEWAY_TOKEN in app.yaml or DO dashboard
+# Set your API_KEY in app.yaml or DO dashboard
 
 # Deploy
 doctl apps create --spec app.yaml
@@ -78,29 +78,27 @@ doctl apps create --spec app.yaml
 doctl apps list
 
 # Open console
-doctl apps console <app-id> openclaw
+doctl apps console <app-id> zeroclaw
 
 # Verify gateway is running
-openclaw gateway health --url ws://127.0.0.1:18789
+zeroclaw status
 
-# Check channel status
-openclaw channels status --probe
+# Check version
+zeroclaw --version
 ```
 
 ### What's Included
 
-- ✅ ZeroClaw gateway (WebSocket on port 18789)
-- ✅ CLI access via `openclaw` wrapper command
-- ✅ All channel plugins (WhatsApp, Telegram, Discord, etc.)
-- ❌ No web UI access (use CLI/TUI)
+- ✅ ZeroClaw gateway (HTTP on port 42617)
+- ✅ CLI access via `zeroclaw` wrapper command
 - ❌ No public URL
 - ❌ Data lost on restart
 
 ---
 
-## Stage 2: Add Web UI + ngrok
+## Stage 2: Add ngrok
 
-Add a public URL to access the Control UI. **Recommended for getting started.**
+Add a public URL. **Recommended for getting started.**
 
 ### Get ngrok Token
 
@@ -134,7 +132,6 @@ Or check the ngrok dashboard at <https://dashboard.ngrok.com/tunnels>
 ### What's Added
 
 - ✅ Everything from Stage 1
-- ✅ Web Control UI
 - ✅ Public URL via ngrok
 - ❌ URL changes on restart (use Tailscale for stable URL)
 - ❌ Data lost on restart
@@ -167,13 +164,13 @@ envs:
   - key: TS_AUTHKEY
     type: SECRET
   - key: STABLE_HOSTNAME
-    value: openclaw
+    value: zeroclaw
 ```
 
 ### Access
 
 ```
-https://openclaw.<your-tailnet>.ts.net
+https://zeroclaw.<your-tailnet>.ts.net
 ```
 
 ### What's Added
@@ -249,9 +246,7 @@ https://<hostname>.<your-tailnet>.ts.net
 
 Without persistence, all data is lost when the container restarts. Add DO Spaces to preserve:
 
-- Channel sessions (WhatsApp linking, etc.)
 - Configuration changes
-- Memory/search index
 - Tailscale state
 
 ### Setup DO Spaces
@@ -275,7 +270,7 @@ envs:
   - key: RESTIC_SPACES_ENDPOINT
     value: tor1.digitaloceanspaces.com  # Match your region
   - key: RESTIC_SPACES_BUCKET
-    value: openclaw-backup
+    value: zeroclaw-backup
   - key: RESTIC_PASSWORD
     type: SECRET
 ```
@@ -286,8 +281,8 @@ The backup system uses [Restic](https://restic.net/) for incremental, encrypted 
 
 | Path              | Contents                                         | Backup Frequency         |
 |-------------------|--------------------------------------------------|--------------------------|
-| `/data/.openclaw` | Gateway config, channel sessions, agents, memory | Every 30s (configurable) |
-| `/data/tailscale` | Tailscale connection state (persistent device)   | Every 30s                |
+| `/data/.zeroclaw` | Gateway config, state                        | Every hour (configurable)|
+| `/data/tailscale` | Tailscale connection state (persistent device)   | Every hour               |
 | `/etc`            | System configuration                             | Every 30s                |
 | `/home`           | User files, Homebrew packages                    | Every 30s                |
 | `/root`           | Root user data                                   | Every 30s                |
@@ -326,29 +321,19 @@ Want an AI assistant to help deploy and configure ZeroClaw? See **[AI-ASSISTED-S
 
 ## CLI Cheat Sheet
 
-The `openclaw` command is a wrapper that runs `zeroclaw` with the correct user and environment. **Always use `openclaw` in console sessions.**
+The `zeroclaw` command is a wrapper that runs the ZeroClaw CLI with the correct user and environment. **Always use `zeroclaw` in console sessions.**
 
 ```bash
 # Gateway
-openclaw gateway health --url ws://127.0.0.1:18789
-openclaw gateway status
-
-# Channels
-openclaw channels status --probe
-openclaw channels login                    # WhatsApp QR code
-
-# Messages
-openclaw message send --channel whatsapp --target "+1234567890" --message "Hello!"
+zeroclaw status
+zeroclaw --version
 
 # Services
-/command/s6-svc -r /run/service/openclaw    # Restart
-/command/s6-svc -r /run/service/ngrok      # Restart ngrok
-
-# Logs
-tail -f /data/.openclaw/logs/gateway.log
+/command/s6-svc -r /run/service/zeroclaw    # Restart
+/command/s6-svc -r /run/service/ngrok       # Restart ngrok
 
 # Config
-cat /data/.openclaw/openclaw.json | jq .
+cat /data/.zeroclaw/config.toml
 ```
 
 See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
@@ -359,10 +344,10 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 
 ### Required
 
-| Variable                 | Description                         |
-|--------------------------|-------------------------------------|
-| `OPENCLAW_GATEWAY_TOKEN` | Password for web setup wizard       |
-| `STABLE_HOSTNAME`        | A stable hostname for this instance |
+| Variable           | Description                         |
+|--------------------|-------------------------------------|
+| `API_KEY`          | API key for the default provider    |
+| `STABLE_HOSTNAME`  | A stable hostname for this instance |
 
 ### Feature Flags
 
@@ -398,11 +383,10 @@ See **[CHEATSHEET.md](CHEATSHEET.md)** for the complete reference.
 
 ### Optional
 
-| Variable                 | Description                                    |
-|--------------------------|------------------------------------------------|
-| `OPENCLAW_GATEWAY_TOKEN` | Gateway auth token (auto-generated if not set) |
-| `GRADIENT_API_KEY`       | DigitalOcean Gradient AI key                   |
-| `GITHUB_USERNAME`        | For SSH key fetching                           |
+| Variable           | Description                                    |
+|--------------------|------------------------------------------------|
+| `GRADIENT_API_KEY` | DigitalOcean Gradient AI key                   |
+| `GITHUB_USERNAME`  | For SSH key fetching                           |
 
 ---
 
@@ -418,8 +402,8 @@ On login, you'll see a colorful status display. Run `motd` anytime to refresh.
 |--------------|----------------------------------------------------|
 | 🖥️ System   | Hostname, uptime, load, memory, disk (color-coded) |
 | 🔗 Tailscale | Status, IP, relay, serve URL (if enabled)          |
-| 🦞 ZeroClaw  | Health status, configured channels, agent count    |
-| 📚 Links     | OpenClaw docs, App Platform docs, source repo      |
+| 🦀 ZeroClaw  | Gateway status                                     |
+| 📚 Links     | ZeroClaw docs, App Platform docs, source repo      |
 
 ### Add Custom Init Scripts
 
@@ -443,7 +427,7 @@ exec my-daemon --foreground
 
 | Service     | Description                                              |
 |-------------|----------------------------------------------------------|
-| `openclaw`  | OpenClaw gateway                                         |
+| `zeroclaw`  | ZeroClaw gateway                                         |
 | `ngrok`     | ngrok tunnel (if enabled)                                |
 | `tailscale` | Tailscale daemon (if enabled)                            |
 | `backup`    | Restic backup service - creates snapshots (if enabled)   |
@@ -472,7 +456,7 @@ exec my-daemon --foreground
 
 ## Documentation
 
-- [OpenClaw Documentation](https://docs.openclaw.ai)
+- [ZeroClaw on GitHub](https://github.com/zeroclaw-labs/zeroclaw)
 - [DigitalOcean App Platform](https://docs.digitalocean.com/products/app-platform/)
 - [AI-Assisted Setup Guide](AI-ASSISTED-SETUP.md)
 - [CLI Cheat Sheet](CHEATSHEET.md)

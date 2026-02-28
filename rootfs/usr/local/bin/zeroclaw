@@ -1,0 +1,18 @@
+#!/bin/bash
+# Wrapper script to run zeroclaw commands as the zeroclaw user with proper environment
+# Usage: zeroclaw <command> [args...]
+# Example: zeroclaw status
+#          zeroclaw gateway
+
+# Source environment utilities
+source /etc/s6-overlay/lib/env-utils.sh
+source_env_prefix ZEROCLAW_
+
+# Run directly if already zeroclaw user, otherwise switch user
+if [ "$(id -un)" = "zeroclaw" ]; then
+  exec /usr/local/bin/zeroclaw "$@"
+elif [ "$(id -u)" = "0" ]; then
+  exec su - zeroclaw -c "zeroclaw$(printf ' %q' "$@")"
+else
+  exec sudo -u zeroclaw bash -l -c "zeroclaw$(printf ' %q' "$@")"
+fi

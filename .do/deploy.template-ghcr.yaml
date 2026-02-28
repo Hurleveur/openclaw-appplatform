@@ -3,15 +3,15 @@
 # This file is experimental. Use deploy.template.yaml (builds from source) for now.
 # =============================================================================
 spec:
-  name: openclaw
+  name: zeroclaw
   region: tor
   workers:
-    - name: openclaw
+    - name: zeroclaw
       # Deploy from pre-built GHCR image (faster than building from source)
       image:
         registry_type: GHCR
         registry: ghcr.io
-        repository: bikramkgupta/openclaw-appplatform
+        repository: Hurleveur/zeroclaw-appplatform
         tag: latest
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-2gb # Minimum 2GB required - 1GB causes heap overflow
@@ -51,7 +51,7 @@ spec:
           type: SECRET
         - key: TS_HOSTNAME
           scope: RUN_TIME
-          value: openclaw
+          value: zeroclaw
         - key: TS_USERSPACE
           scope: RUN_TIME
           value: "true"
@@ -71,7 +71,7 @@ spec:
           value: tor1.digitaloceanspaces.com
         - key: SPACES_BUCKET
           scope: RUN_TIME
-          value: openclaw-backup
+          value: zeroclaw-backup
         - key: RESTIC_PASSWORD
           scope: RUN_TIME
           type: SECRET

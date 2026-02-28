@@ -1,5 +1,5 @@
 #!/bin/bash
-# Shared test utilities for openclaw-appplatform tests
+# Shared test utilities for zeroclaw-appplatform tests
 
 # Get project root from any test directory
 get_project_root() {

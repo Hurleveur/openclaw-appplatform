@@ -1,0 +1,145 @@
+#!/command/with-contenv bash
+# Generate zeroclaw gateway configuration
+source /etc/s6-overlay/lib/env-utils.sh
+
+set -e
+source_env_prefix ZEROCLAW_
+
+# ZeroClaw requires env vars for configuration.
+persist_env_var ZEROCLAW_ \
+  GOOGLE_CREDENTIALS_BASE64="${GOOGLE_CREDENTIALS_BASE64:-}" \
+  TAILSCALE_ENABLE="${TAILSCALE_ENABLE:-false}" \
+  TS_SOCKET="${TS_SOCKET}" \
+  TS_EXTRA_ARGS="${TS_EXTRA_ARGS}" \
+  TS_HOSTNAME="${TS_HOSTNAME}" \
+  TS_STATE_DIR="${TS_STATE_DIR}" \
+  TS_USERSPACE="${TS_USERSPACE}" \
+  ZEROCLAW_STATE_DIR=/data/.zeroclaw \
+  ZEROCLAW_WORKSPACE=/data/workspace \
+  ZEROCLAW_GATEWAY_PORT="${ZEROCLAW_GATEWAY_PORT:-42617}" \
+  ZEROCLAW_GATEWAY_HOST="${ZEROCLAW_GATEWAY_HOST:-127.0.0.1}" \
+  ZEROCLAW_ALLOW_PUBLIC_BIND="${ZEROCLAW_ALLOW_PUBLIC_BIND:-false}" \
+  GOOGLE_CREDENTIALS_PATH="${GOOGLE_CREDENTIALS_PATH:-/data/.zeroclaw/google-credentials.json}"
+
+# Ensure directories exist (only if variables are set)
+[ -n "$ZEROCLAW_STATE_DIR" ] && mkdir -p "$ZEROCLAW_STATE_DIR"
+[ -n "$ZEROCLAW_WORKSPACE" ] && mkdir -p "$ZEROCLAW_WORKSPACE"
+
+# Handle Google credentials if provided as base64
+if [ -n "$GOOGLE_CREDENTIALS_BASE64" ]; then
+  echo "[generate-config] Decoding Google credentials from GOOGLE_CREDENTIALS_BASE64"
+  GOOGLE_CREDENTIALS_DIR="$(dirname "$GOOGLE_CREDENTIALS_PATH")"
+  if ! mkdir -p "$GOOGLE_CREDENTIALS_DIR"; then
+    echo "[generate-config] ERROR: Failed to create credentials directory: $GOOGLE_CREDENTIALS_DIR" >&2
+    exit 1
+  fi
+  if ! echo "$GOOGLE_CREDENTIALS_BASE64" | base64 -d > "$GOOGLE_CREDENTIALS_PATH"; then
+    echo "[generate-config] WARNING: Failed to decode GOOGLE_CREDENTIALS_BASE64" >&2
+    rm -f "$GOOGLE_CREDENTIALS_PATH"
+  else
+    chown zeroclaw:zeroclaw "$GOOGLE_CREDENTIALS_PATH"
+    chmod 600 "$GOOGLE_CREDENTIALS_PATH"
+    echo "[generate-config] Google credentials saved to $GOOGLE_CREDENTIALS_PATH"
+  fi
+fi
+
+# Validate mutual exclusivity of ngrok and tailscale
+if [ "${ENABLE_NGROK:-false}" = "true" ] && [ "${TAILSCALE_ENABLE:-false}" = "true" ]; then
+  echo "[generate-config] WARNING: Both ENABLE_NGROK and TAILSCALE_ENABLE are true."
+  echo "[generate-config] This doesn't make sense - ngrok is public, Tailscale is private."
+  echo "[generate-config] Defaulting to Tailscale (disable ENABLE_NGROK to silence this)."
+fi
+
+# Setup zeroclaw user's .profile (used by login shells, no interactive check)
+SOURCE_LINE="source /etc/s6-overlay/lib/env-utils.sh"
+PROFILE="/home/zeroclaw/.profile"
+# Create .profile if it doesn't exist
+touch "$PROFILE"
+chown zeroclaw:zeroclaw "$PROFILE"
+# Append environment setup if not already present
+if ! grep -qF "$SOURCE_LINE" "$PROFILE"; then
+    cat >> "$PROFILE" <<'EOF'
+# ZeroClaw environment setup
+source /etc/s6-overlay/lib/env-utils.sh 2>/dev/null || true
+source_env_prefix ZEROCLAW_ 2>/dev/null || true
+EOF
+    echo "Appended environment setup to $PROFILE"
+fi
+
+DEFAULT_CONFIG="/etc/zeroclaw/config.default.toml"
+CONFIG_FILE="$ZEROCLAW_STATE_DIR/config.toml"
+
+echo "[generate-config] Building config: $CONFIG_FILE"
+
+# Show version
+echo "[generate-config] Checking zeroclaw installation..."
+if command -v zeroclaw >/dev/null 2>&1; then
+  ZEROCLAW_VERSION=$(zeroclaw --version 2>/dev/null || echo "unknown")
+  echo "[generate-config] ZeroClaw version: $ZEROCLAW_VERSION"
+else
+  echo "[generate-config] WARNING: zeroclaw not found in PATH" >&2
+fi
+
+# Generate an API key if not provided
+API_KEY="${API_KEY:-${ZEROCLAW_API_KEY:-}}"
+if [ -z "$API_KEY" ]; then
+  API_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '=/+' | head -c 32)
+  echo "[generate-config] Generated API key (ephemeral): $API_KEY"
+  echo "[generate-config] Save this key - you'll need it to connect to the gateway"
+fi
+
+# Write API key to s6 environment
+persist_env_var ZEROCLAW_ API_KEY="$API_KEY" ZEROCLAW_API_KEY="$API_KEY"
+echo "[generate-config] API key configured (API_KEY / ZEROCLAW_API_KEY)"
+
+# Start with default config as base
+if [ -f "$DEFAULT_CONFIG" ]; then
+  cp "$DEFAULT_CONFIG" "$CONFIG_FILE"
+  echo "[generate-config] Using default config from $DEFAULT_CONFIG"
+else
+  # Fallback minimal config if default doesn't exist
+  cat > "$CONFIG_FILE" <<TOML
+[gateway]
+port = ${ZEROCLAW_GATEWAY_PORT:-42617}
+host = "${ZEROCLAW_GATEWAY_HOST:-127.0.0.1}"
+allow_public_bind = false
+TOML
+  echo "[generate-config] Warning: Default config not found, using minimal config"
+fi
+
+# Update config with environment-driven values
+# Set API key
+sed -i "s|^api_key = .*|api_key = \"$API_KEY\"|" "$CONFIG_FILE"
+
+# Set workspace and config paths
+sed -i "s|^workspace_dir = .*|workspace_dir = \"$ZEROCLAW_WORKSPACE\"|" "$CONFIG_FILE"
+sed -i "s|^config_path = .*|config_path = \"$CONFIG_FILE\"|" "$CONFIG_FILE"
+
+# Set gateway port and host
+sed -i "s|^port = .*|port = ${ZEROCLAW_GATEWAY_PORT:-42617}|" "$CONFIG_FILE"
+sed -i "s|^host = .*|host = \"${ZEROCLAW_GATEWAY_HOST:-127.0.0.1}\"|" "$CONFIG_FILE"
+
+# Set provider if specified
+if [ -n "${PROVIDER:-}" ]; then
+  sed -i "s|^default_provider = .*|default_provider = \"$PROVIDER\"|" "$CONFIG_FILE"
+fi
+
+# Set model if specified
+if [ -n "${ZEROCLAW_MODEL:-}" ]; then
+  sed -i "s|^default_model = .*|default_model = \"$ZEROCLAW_MODEL\"|" "$CONFIG_FILE"
+fi
+
+# Allow public bind if Tailscale or ngrok is configured
+if [ "${TAILSCALE_ENABLE:-false}" = "true" ] || [ "${ENABLE_NGROK:-false}" = "true" ]; then
+  sed -i "s|^allow_public_bind = .*|allow_public_bind = true|" "$CONFIG_FILE"
+fi
+
+# Permissions applied via /etc/digitalocean/permissions.yaml
+
+echo "[generate-config] Final config:"
+cat "$CONFIG_FILE"
+
+persist_env_var ZEROCLAW_
+
+echo "[generate-config] Done generating config"
+
